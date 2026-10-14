@@ -88,12 +88,14 @@ fun ProductDetailSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(260.dp)
-                    .background(
-                        if (product.imageRes != null) Color.Transparent
-                        else Brush.verticalGradient(
-                            colors = listOf(
-                                Color(selectedColor).copy(alpha = 0.35f),
-                                Color(selectedColor).copy(alpha = 0.1f)
+                    .then(
+                        if (product.imageRes != null) Modifier.background(Color.Transparent)
+                        else Modifier.background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(selectedColor).copy(alpha = 0.35f),
+                                    Color(selectedColor).copy(alpha = 0.1f)
+                                )
                             )
                         )
                     )

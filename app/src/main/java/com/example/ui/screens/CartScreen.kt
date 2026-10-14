@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -49,7 +50,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -169,16 +172,26 @@ fun CartScreen(
                                 .background(Color(item.selectedColorHex).copy(alpha = 0.25f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = when (item.product.category) {
-                                    "Tech" -> "🎧"
-                                    "Living" -> "💡"
-                                    "Fashion" -> "🎒"
-                                    "Fitness" -> "⚡"
-                                    else -> "✨"
-                                },
-                                fontSize = 32.sp
-                            )
+                            if (item.product.imageRes != null) {
+                                Image(
+                                    painter = painterResource(id = item.product.imageRes),
+                                    contentDescription = item.product.title,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else {
+                                Text(
+                                    text = when (item.product.category) {
+                                        "Tech" -> "🎧"
+                                        "Living" -> "💡"
+                                        "Fashion" -> "🥻"
+                                        "Groceries" -> "🌾"
+                                        "Fitness" -> "⚡"
+                                        else -> "✨"
+                                    },
+                                    fontSize = 32.sp
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.width(14.dp))

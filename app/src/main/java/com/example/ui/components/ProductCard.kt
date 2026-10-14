@@ -77,12 +77,14 @@ fun ProductCard(
                     .fillMaxWidth()
                     .height(130.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        if (product.imageRes != null) Color.Transparent
-                        else Brush.verticalGradient(
-                            colors = listOf(
-                                Color(product.primaryColorHex).copy(alpha = 0.25f),
-                                Color(product.primaryColorHex).copy(alpha = 0.08f)
+                    .then(
+                        if (product.imageRes != null) Modifier.background(Color.Transparent)
+                        else Modifier.background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(product.primaryColorHex).copy(alpha = 0.25f),
+                                    Color(product.primaryColorHex).copy(alpha = 0.08f)
+                                )
                             )
                         )
                     )

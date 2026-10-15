@@ -1,6 +1,12 @@
 package com.example.data.repository
 
+import android.content.Context
 import com.example.R
+import com.example.data.local.AppDatabase
+import com.example.data.local.dao.CartDao
+import com.example.data.local.dao.ProductDao
+import com.example.data.local.entity.CartItemEntity
+import com.example.data.local.entity.toEntity
 import com.example.data.model.CartItem
 import com.example.data.model.CourierInfo
 import com.example.data.model.Order
@@ -9,14 +15,66 @@ import com.example.data.model.Product
 import com.example.data.model.TastePreference
 import com.example.data.model.TrackingStep
 import com.example.data.model.UserPersona
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class ShoppingRepository {
+class ShoppingRepository(
+    private val productDao: ProductDao? = null,
+    private val cartDao: CartDao? = null,
+    private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+) {
+
+    init {
+        if (productDao != null && cartDao != null) {
+            coroutineScope.launch {
+                // Seed initial products in Room if not populated
+                if (productDao.getProductCount() == 0) {
+                    productDao.insertProducts(initialProducts.map { it.toEntity() })
+                }
+                // Seed initial cart items in Room if empty
+                if (cartDao.getCartItemCount() == 0) {
+                    cartDao.insertCartItem(
+                        CartItemEntity(
+                            productId = initialProducts[0].id,
+                            selectedColorHex = initialProducts[0].primaryColorHex,
+                            quantity = 1
+                        )
+                    )
+                    cartDao.insertCartItem(
+                        CartItemEntity(
+                            productId = initialProducts[1].id,
+                            selectedColorHex = initialProducts[1].primaryColorHex,
+                            quantity = 1
+                        )
+                    )
+                }
+
+                // Collect products reactively from Room
+                launch {
+                    productDao.getAllProducts().collect { entities ->
+                        if (entities.isNotEmpty()) {
+                            _products.value = entities.map { it.toDomain() }
+                        }
+                    }
+                }
+
+                // Collect cart items reactively with their full product details
+                launch {
+                    cartDao.getCartItemsWithProduct().collect { itemsWithProduct ->
+                        _cartItems.value = itemsWithProduct.map { it.toDomain() }
+                    }
+                }
+            }
+        }
+    }
 
     private val initialProducts = listOf(
         Product(
@@ -418,32 +476,66 @@ class ShoppingRepository {
     }
 
     fun addToCart(product: Product, selectedColorHex: Long = product.primaryColorHex) {
-        val current = _cartItems.value.toMutableList()
-        val index = current.indexOfFirst { it.product.id == product.id && it.selectedColorHex == selectedColorHex }
-        if (index >= 0) {
-            val existing = current[index]
-            current[index] = existing.copy(quantity = existing.quantity + 1)
+        if (cartDao != null) {
+            coroutineScope.launch {
+                productDao?.insertProduct(product.toEntity())
+                val existing = cartDao.getCartItem(product.id, selectedColorHex)
+                if (existing != null) {
+                    cartDao.updateQuantity(product.id, selectedColorHex, existing.quantity + 1)
+                } else {
+                    cartDao.insertCartItem(
+                        CartItemEntity(
+                            productId = product.id,
+                            selectedColorHex = selectedColorHex,
+                            quantity = 1
+                        )
+                    )
+                }
+            }
         } else {
-            current.add(CartItem(product = product, quantity = 1, selectedColorHex = selectedColorHex))
-        }
-        _cartItems.value = current
-    }
-
-    fun updateCartItemQuantity(productId: String, selectedColorHex: Long, newQuantity: Int) {
-        val current = _cartItems.value.toMutableList()
-        val index = current.indexOfFirst { it.product.id == productId && it.selectedColorHex == selectedColorHex }
-        if (index >= 0) {
-            if (newQuantity <= 0) {
-                current.removeAt(index)
+            val current = _cartItems.value.toMutableList()
+            val index = current.indexOfFirst { it.product.id == product.id && it.selectedColorHex == selectedColorHex }
+            if (index >= 0) {
+                val existing = current[index]
+                current[index] = existing.copy(quantity = existing.quantity + 1)
             } else {
-                current[index] = current[index].copy(quantity = newQuantity)
+                current.add(CartItem(product = product, quantity = 1, selectedColorHex = selectedColorHex))
             }
             _cartItems.value = current
         }
     }
 
+    fun updateCartItemQuantity(productId: String, selectedColorHex: Long, newQuantity: Int) {
+        if (cartDao != null) {
+            coroutineScope.launch {
+                if (newQuantity <= 0) {
+                    cartDao.deleteCartItem(productId, selectedColorHex)
+                } else {
+                    cartDao.updateQuantity(productId, selectedColorHex, newQuantity)
+                }
+            }
+        } else {
+            val current = _cartItems.value.toMutableList()
+            val index = current.indexOfFirst { it.product.id == productId && it.selectedColorHex == selectedColorHex }
+            if (index >= 0) {
+                if (newQuantity <= 0) {
+                    current.removeAt(index)
+                } else {
+                    current[index] = current[index].copy(quantity = newQuantity)
+                }
+                _cartItems.value = current
+            }
+        }
+    }
+
     fun clearCart() {
-        _cartItems.value = emptyList()
+        if (cartDao != null) {
+            coroutineScope.launch {
+                cartDao.clearCart()
+            }
+        } else {
+            _cartItems.value = emptyList()
+        }
     }
 
     fun placeOrder(
@@ -524,4 +616,22 @@ class ShoppingRepository {
         clearCart()
         return order
     }
+
+    companion object {
+        @Volatile
+        private var INSTANCE: ShoppingRepository? = null
+
+        fun getInstance(context: Context): ShoppingRepository {
+            return INSTANCE ?: synchronized(this) {
+                val db = AppDatabase.getDatabase(context)
+                val instance = ShoppingRepository(
+                    productDao = db.productDao(),
+                    cartDao = db.cartDao()
+                )
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
 }
+

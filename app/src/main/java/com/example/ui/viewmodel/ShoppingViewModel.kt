@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.model.CartItem
 import com.example.data.model.Order
@@ -28,8 +29,14 @@ enum class AppNavTab {
 }
 
 class ShoppingViewModel(
-    private val repository: ShoppingRepository = ShoppingRepository()
-) : ViewModel() {
+    application: Application,
+    private val repository: ShoppingRepository
+) : AndroidViewModel(application) {
+
+    constructor(application: Application) : this(
+        application = application,
+        repository = ShoppingRepository.getInstance(application)
+    )
 
     private val _currentTab = MutableStateFlow(AppNavTab.SHOP)
     val currentTab: StateFlow<AppNavTab> = _currentTab.asStateFlow()

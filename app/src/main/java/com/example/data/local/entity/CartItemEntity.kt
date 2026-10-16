@@ -5,7 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 
 @Entity(
-    tableName = "cart_items",
+    tableName = "cart_item_entities",
     primaryKeys = ["productId", "selectedColorHex"],
     foreignKeys = [
         ForeignKey(

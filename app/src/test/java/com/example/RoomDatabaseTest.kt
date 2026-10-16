@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.data.local.AppDatabase
 import com.example.data.local.dao.CartDao
 import com.example.data.local.dao.ProductDao
+import com.example.data.local.entity.CartItem
 import com.example.data.local.entity.CartItemEntity
 import com.example.data.local.entity.ProductEntity
 import com.example.data.model.Product
@@ -169,5 +170,57 @@ class RoomDatabaseTest {
         // Foreign key cascade should delete cart item
         val remainingCartItems = cartDao.getCartItemsWithProductSync()
         assertTrue("Cart item should be removed via cascade delete", remainingCartItems.isEmpty())
+    }
+
+    @Test
+    fun cartItemEntityStoresIdNamePriceAndQuantity() = runBlocking {
+        val cartItem = CartItem(
+            name = "Royal Banarasi Silk Saree",
+            price = 3499.0,
+            quantity = 2
+        )
+        assertEquals("Royal Banarasi Silk Saree", cartItem.name)
+        assertEquals(3499.0, cartItem.price, 0.001)
+        assertEquals(2, cartItem.quantity)
+        assertEquals(6998.0, cartItem.totalPrice, 0.001)
+
+        val insertedId = cartDao.insert(cartItem)
+        assertTrue("Auto-generated ID should be greater than 0", insertedId > 0)
+
+        val loaded = cartDao.getCartItemById(insertedId.toInt())
+        assertNotNull("Loaded cart item should not be null", loaded)
+        assertEquals("Royal Banarasi Silk Saree", loaded?.name)
+        assertEquals(3499.0, loaded?.price ?: 0.0, 0.001)
+        assertEquals(2, loaded?.quantity)
+
+        // Test update
+        val updated = loaded!!.copy(quantity = 3)
+        cartDao.update(updated)
+
+        val reloaded = cartDao.getCartItemById(insertedId.toInt())
+        assertEquals(3, reloaded?.quantity)
+        assertEquals(10497.0, reloaded?.totalPrice ?: 0.0, 0.001)
+
+        // Test delete
+        cartDao.delete(reloaded!!)
+        val deleted = cartDao.getCartItemById(insertedId.toInt())
+        assertNull("Cart item should be deleted", deleted)
+    }
+
+    @Test
+    fun cartItemSecondaryConstructorsSupportVariousIdTypes() {
+        val fromInt = CartItem(id = 10, name = "Basmati Rice", price = 149.0, quantity = 3)
+        assertEquals(10, fromInt.id)
+        assertEquals("Basmati Rice", fromInt.name)
+        assertEquals(149.0, fromInt.price, 0.001)
+        assertEquals(3, fromInt.quantity)
+
+        val fromLong = CartItem(id = 20L, name = "Ghee", price = 499.0, quantity = 1)
+        assertEquals(20, fromLong.id)
+        assertEquals("Ghee", fromLong.name)
+
+        val fromString = CartItem(id = "30", name = "Masala Chai", price = 79.0, quantity = 4)
+        assertEquals(30, fromString.id)
+        assertEquals("Masala Chai", fromString.name)
     }
 }

@@ -8,12 +8,13 @@ import androidx.room.TypeConverters
 import com.example.data.local.converter.Converters
 import com.example.data.local.dao.CartDao
 import com.example.data.local.dao.ProductDao
+import com.example.data.local.entity.CartItem
 import com.example.data.local.entity.CartItemEntity
 import com.example.data.local.entity.ProductEntity
 
 @Database(
-    entities = [ProductEntity::class, CartItemEntity::class],
-    version = 1,
+    entities = [ProductEntity::class, CartItemEntity::class, CartItem::class],
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

@@ -109,6 +109,20 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `nehamycartapp custom scheme resolves to MainActivity`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val packageManager = context.packageManager
+
+        val customSchemeIntent = Intent(Intent.ACTION_VIEW, Uri.parse("nehamycartapp://cart")).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+            addCategory(Intent.CATEGORY_DEFAULT)
+        }
+        val resolveInfo = packageManager.resolveActivity(customSchemeIntent, 0)
+        assertNotNull("Custom scheme link should resolve to an activity", resolveInfo)
+        assertEquals(MainActivity::class.java.name, resolveInfo?.activityInfo?.name)
+    }
+
+    @Test
     fun `main activity handles deep link data`() {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://nehamycartapp.com/profile"))
         val controller = Robolectric.buildActivity(MainActivity::class.java, intent)

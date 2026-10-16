@@ -57,6 +57,17 @@
                 <data android:host="://nehamycartapp.com" />
             </intent-filter>
 
+            <!-- Custom scheme deep links (No DNS needed; opens directly when clicked) -->
+            <intent-filter android:label="Open My Cart">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="nehamycartapp" />
+                <data android:scheme="nehamycart" />
+                <data android:scheme="mycart" />
+            </intent-filter>
+
             <!-- Deep link intent filters for legacy myapp.com -->
             <intent-filter android:label="Open My App">
                 <action android:name="android.intent.action.VIEW" />

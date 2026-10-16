@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DirectionsBike
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Card
@@ -75,6 +76,7 @@ fun ShopHomeScreen(
     onAddToCart: (Product) -> Unit,
     onNavigateToTracking: () -> Unit,
     onNavigateToRecommendations: () -> Unit,
+    onOpenLinkTester: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val categories = listOf("All", "Fashion", "Groceries", "Tech", "Living", "Fitness")
@@ -195,7 +197,74 @@ fun ShopHomeScreen(
             )
         }
 
-        // 3. Hero Promo Banner
+        // 3. Deep Link Quick Access & Tester Banner
+        item(span = { GridItemSpan(2) }) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 2.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable(onClick = onOpenLinkTester)
+                    .testTag("deep_link_banner"),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.primary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Link,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "App Link: nehamycartapp.com",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Tap to test click links, direct scheme & share",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primary
+                    ) {
+                        Text(
+                            text = "Test ↗",
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // 4. Hero Promo Banner
         item(span = { GridItemSpan(2) }) {
             Card(
                 modifier = Modifier

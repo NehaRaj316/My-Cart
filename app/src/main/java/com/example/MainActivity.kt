@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Badge
@@ -55,8 +56,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,6 +70,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.OrderStatus
+import com.example.ui.components.AppDeepLinkDialog
 import com.example.ui.components.ProductDetailSheet
 import com.example.ui.screens.CartScreen
 import com.example.ui.screens.OrderTrackingScreen
@@ -116,6 +120,7 @@ class MainActivity : ComponentActivity() {
                 val isSimulationPlaying by viewModel.isLiveSimulationPlaying.collectAsState()
                 val snackbarEvent by viewModel.snackbarEvent.collectAsState()
 
+                var showDeepLinkDialog by remember { mutableStateOf(false) }
                 val snackbarHostState = remember { SnackbarHostState() }
                 val coroutineScope = rememberCoroutineScope()
                 val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -160,6 +165,18 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             actions = {
+                                // App Deep Link / Share Button
+                                IconButton(
+                                    onClick = { showDeepLinkDialog = true },
+                                    modifier = Modifier.testTag("top_bar_link_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Link,
+                                        contentDescription = "App Deep Links & Share",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+
                                 // Wishlist indicator button
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
@@ -318,7 +335,8 @@ class MainActivity : ComponentActivity() {
                                     onWishlistToggle = viewModel::toggleWishlist,
                                     onAddToCart = viewModel::addToCart,
                                     onNavigateToTracking = { viewModel.selectTab(AppNavTab.TRACKING) },
-                                    onNavigateToRecommendations = { viewModel.selectTab(AppNavTab.RECOMMENDATIONS) }
+                                    onNavigateToRecommendations = { viewModel.selectTab(AppNavTab.RECOMMENDATIONS) },
+                                    onOpenLinkTester = { showDeepLinkDialog = true }
                                 )
                             }
                             AppNavTab.RECOMMENDATIONS -> {
@@ -373,6 +391,19 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+
+                        // App Deep Link Tester & Share Dialog
+                        if (showDeepLinkDialog) {
+                            AppDeepLinkDialog(
+                                onDismissRequest = { showDeepLinkDialog = false },
+                                onTestLink = { url ->
+                                    handleDeepLink(Uri.parse(url))
+                                },
+                                onShowMessage = { msg ->
+                                    viewModel.showSnackbar(msg)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -393,14 +424,15 @@ class MainActivity : ComponentActivity() {
     private fun handleDeepLink(uri: Uri) {
         val fullLink = uri.toString()
         val path = uri.path.orEmpty().lowercase()
+        val host = uri.host.orEmpty().lowercase()
         when {
-            path.startsWith("/profile") -> {
+            path.startsWith("/profile") || host == "profile" || path.startsWith("/recommendations") || host == "recommendations" -> {
                 viewModel.selectTab(AppNavTab.RECOMMENDATIONS)
             }
-            path.startsWith("/cart") -> {
+            path.startsWith("/cart") || host == "cart" -> {
                 viewModel.selectTab(AppNavTab.CART)
             }
-            path.startsWith("/tracking") || path.startsWith("/orders") -> {
+            path.startsWith("/tracking") || host == "tracking" || path.startsWith("/orders") || host == "orders" -> {
                 viewModel.selectTab(AppNavTab.TRACKING)
             }
             else -> {

@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Validation helper for UserProfile
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             (!('email' in data) || data.email == null || (data.email is string && data.email.size() <= 150)) &&
+             (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 100)) &&
+             (!('selectedPersona' in data) || data.selectedPersona == null || (data.selectedPersona is string && data.selectedPersona.size() <= 50)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    // Validation helper for CartItem
+    function isValidCartItem(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.productId is string && data.productId.size() > 0 && data.productId.size() <= 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             (data.price is int || data.price is float) && data.price >= 0 &&
+             data.quantity is int && data.quantity > 0 && data.quantity <= 999 &&
+             (!('imageUrl' in data) || data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 1000)) &&
+             (!('selectedColor' in data) || data.selectedColor == null || (data.selectedColor is string && data.selectedColor.size() <= 50)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    // Validation helper for Order
+    function isValidOrder(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             (data.totalAmount is int || data.totalAmount is float) && data.totalAmount >= 0 &&
+             data.status is string && data.status in ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'] &&
+             data.deliveryAddress is string && data.deliveryAddress.size() > 0 && data.deliveryAddress.size() <= 500 &&
+             data.itemsCount is int && data.itemsCount > 0 && data.itemsCount <= 1000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().keys().hasAll(['userId', 'createdAt']) &&
+                       incoming().keys().hasOnly(['userId', 'email', 'displayName', 'selectedPersona', 'createdAt', 'updatedAt']);
+      allow update: if isOwner(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['email', 'displayName', 'selectedPersona', 'updatedAt']);
+      allow delete: if isOwner(userId);
+
+      // Cart items subcollection
+      match /cart/{itemId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(itemId) &&
+                         isValidCartItem(incoming()) &&
+                         incoming().keys().hasAll(['userId', 'productId', 'name', 'price', 'quantity', 'createdAt']) &&
+                         incoming().keys().hasOnly(['id', 'userId', 'productId', 'name', 'price', 'quantity', 'imageUrl', 'selectedColor', 'createdAt', 'updatedAt']);
+        allow update: if isOwner(userId) &&
+                         isValidId(itemId) &&
+                         isValidCartItem(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().productId == existing().productId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'price', 'quantity', 'imageUrl', 'selectedColor', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(itemId);
+      }
+
+      // Orders subcollection
+      match /orders/{orderId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(orderId) &&
+                         isValidOrder(incoming()) &&
+                         incoming().keys().hasAll(['userId', 'totalAmount', 'status', 'deliveryAddress', 'itemsCount', 'createdAt']) &&
+                         incoming().keys().hasOnly(['id', 'userId', 'totalAmount', 'status', 'deliveryAddress', 'itemsCount', 'createdAt', 'updatedAt']);
+        allow update: if isOwner(userId) &&
+                         isValidId(orderId) &&
+                         isValidOrder(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+        allow delete: if false; // Orders cannot be deleted
+      }
+    }
+  }
+}

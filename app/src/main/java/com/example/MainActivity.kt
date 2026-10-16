@@ -34,7 +34,14 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.credentials.CredentialManager
+import com.example.ui.screens.AuthScreen
+import com.example.ui.screens.attemptAutoSignIn
+import com.example.ui.screens.signOut
+import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -137,79 +144,138 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-                    topBar = {
-                        CenterAlignedTopAppBar(
-                            title = {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(28.dp)
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(MaterialTheme.colorScheme.primary),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(text = "🛍️", fontSize = 16.sp)
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = stringResource(R.string.app_name),
-                                        fontWeight = FontWeight.ExtraBold,
-                                        style = MaterialTheme.typography.titleLarge
-                                    )
-                                }
-                            },
-                            actions = {
-                                // App Deep Link / Share Button
-                                IconButton(
-                                    onClick = { showDeepLinkDialog = true },
-                                    modifier = Modifier.testTag("top_bar_link_button")
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Link,
-                                        contentDescription = "App Deep Links & Share",
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
+                var currentUser by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
 
-                                // Wishlist indicator button
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                                    modifier = Modifier
-                                        .padding(end = 12.dp)
-                                        .testTag("top_bar_wishlist")
-                                ) {
+                DisposableEffect(Unit) {
+                    val auth = FirebaseAuth.getInstance()
+                    val listener = FirebaseAuth.AuthStateListener { fbAuth ->
+                        currentUser = fbAuth.currentUser
+                    }
+                    auth.addAuthStateListener(listener)
+                    onDispose {
+                        auth.removeAuthStateListener(listener)
+                    }
+                }
+
+                LaunchedEffect(Unit) {
+                    if (currentUser == null) {
+                        val credentialManager = CredentialManager.create(this@MainActivity)
+                        attemptAutoSignIn(
+                            context = this@MainActivity,
+                            credentialManager = credentialManager,
+                            onAuthSuccess = {
+                                currentUser = FirebaseAuth.getInstance().currentUser
+                            },
+                            onUnauthenticated = {},
+                            scope = coroutineScope
+                        )
+                    }
+                }
+
+                if (currentUser == null) {
+                    AuthScreen(
+                        onAuthSuccess = {
+                            currentUser = FirebaseAuth.getInstance().currentUser
+                            viewModel.showSnackbar("Welcome ${currentUser?.displayName ?: "back"}!")
+                        }
+                    )
+                } else {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+                        topBar = {
+                            CenterAlignedTopAppBar(
+                                title = {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(28.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(MaterialTheme.colorScheme.primary),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(text = "🛍️", fontSize = 16.sp)
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.app_name),
+                                            fontWeight = FontWeight.ExtraBold,
+                                            style = MaterialTheme.typography.titleLarge
+                                        )
+                                    }
+                                },
+                                actions = {
+                                    // App Deep Link / Share Button
+                                    IconButton(
+                                        onClick = { showDeepLinkDialog = true },
+                                        modifier = Modifier.testTag("top_bar_link_button")
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Favorite,
-                                            contentDescription = "Wishlist count",
-                                            tint = Color(0xFFF43F5E),
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = "${wishlistIds.size}",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold
+                                            imageVector = Icons.Default.Link,
+                                            contentDescription = "App Deep Links & Share",
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
                                     }
-                                }
-                            },
-                            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.surface
+
+                                    // Wishlist indicator button
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                        modifier = Modifier
+                                            .padding(end = 4.dp)
+                                            .testTag("top_bar_wishlist")
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Favorite,
+                                                contentDescription = "Wishlist count",
+                                                tint = Color(0xFFF43F5E),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = "${wishlistIds.size}",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+
+                                    // Logout / Sign Out Button
+                                    IconButton(
+                                        onClick = {
+                                            val credentialManager = CredentialManager.create(this@MainActivity)
+                                            signOut(
+                                                context = this@MainActivity,
+                                                credentialManager = credentialManager,
+                                                onSignOutComplete = {
+                                                    currentUser = null
+                                                    viewModel.showSnackbar("Signed out")
+                                                },
+                                                scope = coroutineScope
+                                            )
+                                        },
+                                        modifier = Modifier.testTag("top_bar_sign_out_button")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Logout,
+                                            contentDescription = "Sign Out",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                },
+                                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.surface
+                                )
                             )
-                        )
-                    },
-                    bottomBar = {
+                        },
+                        bottomBar = {
                         NavigationBar(
                             modifier = Modifier
                                 .windowInsetsPadding(WindowInsets.navigationBars)
@@ -409,6 +475,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)

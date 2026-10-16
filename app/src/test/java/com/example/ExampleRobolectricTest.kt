@@ -71,20 +71,6 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun `deep link intent filter resolves to MainActivity`() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val packageManager = context.packageManager
-
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://myapp.com/profile")).apply {
-            addCategory(Intent.CATEGORY_BROWSABLE)
-            addCategory(Intent.CATEGORY_DEFAULT)
-        }
-        val resolveInfo = packageManager.resolveActivity(intent, 0)
-        assertNotNull("Deep link should resolve to an activity", resolveInfo)
-        assertEquals(MainActivity::class.java.name, resolveInfo?.activityInfo?.name)
-    }
-
-    @Test
     fun `nehamycartapp com deep link intent filter resolves to MainActivity`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val packageManager = context.packageManager

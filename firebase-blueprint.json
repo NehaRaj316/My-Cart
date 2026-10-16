@@ -1,0 +1,151 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with personalized shopping preferences",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique Google user ID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User Google email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "selectedPersona": {
+          "type": "string",
+          "description": "Personalized shopping persona preference"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was created via FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was updated via FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["userId", "createdAt"]
+    },
+    "CartItem": {
+      "title": "CartItem",
+      "description": "Shopping cart line item for the authenticated user",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Document ID for the cart item"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner Google user ID"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Product ID referenced in catalog"
+        },
+        "name": {
+          "type": "string",
+          "description": "Item name"
+        },
+        "price": {
+          "type": "number",
+          "description": "Price in INR or store currency"
+        },
+        "quantity": {
+          "type": "integer",
+          "description": "Item quantity in cart"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Optional image URL or drawable reference"
+        },
+        "selectedColor": {
+          "type": "string",
+          "description": "Optional color or variant selection"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp via FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp via FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["userId", "productId", "name", "price", "quantity", "createdAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Placed order for the authenticated user",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique order identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID"
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "Total order amount"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"],
+          "description": "Current order lifecycle status"
+        },
+        "deliveryAddress": {
+          "type": "string",
+          "description": "Delivery shipping address"
+        },
+        "itemsCount": {
+          "type": "integer",
+          "description": "Count of distinct items ordered"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp via FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp via FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["userId", "totalAmount", "status", "deliveryAddress", "itemsCount", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "User profile and shopping preference store"
+    },
+    "/users/{userId}/cart/{itemId}": {
+      "schema": {
+        "$ref": "#/entities/CartItem"
+      },
+      "description": "User shopping cart items subcollection"
+    },
+    "/users/{userId}/orders/{orderId}": {
+      "schema": {
+        "$ref": "#/entities/Order"
+      },
+      "description": "User order records subcollection"
+    }
+  }
+}

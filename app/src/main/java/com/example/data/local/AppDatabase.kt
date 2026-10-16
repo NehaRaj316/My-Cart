@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.data.local.converter.Converters
 import com.example.data.local.dao.CartDao
+import com.example.data.local.dao.CartItemDao
 import com.example.data.local.dao.ProductDao
 import com.example.data.local.entity.CartItem
 import com.example.data.local.entity.CartItemEntity
@@ -22,6 +23,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun productDao(): ProductDao
     abstract fun cartDao(): CartDao
+    abstract fun cartItemDao(): CartItemDao
 
     companion object {
         @Volatile

@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.R
 import com.example.data.local.AppDatabase
 import com.example.data.local.dao.CartDao
+import com.example.data.local.dao.CartItemDao
 import com.example.data.local.dao.ProductDao
 import com.example.data.local.entity.CartItemEntity
 import com.example.data.local.entity.toEntity
@@ -29,6 +30,7 @@ import java.util.Locale
 class ShoppingRepository(
     private val productDao: ProductDao? = null,
     private val cartDao: CartDao? = null,
+    private val cartItemDao: CartItemDao? = null,
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 ) {
 
@@ -626,7 +628,8 @@ class ShoppingRepository(
                 val db = AppDatabase.getDatabase(context)
                 val instance = ShoppingRepository(
                     productDao = db.productDao(),
-                    cartDao = db.cartDao()
+                    cartDao = db.cartDao(),
+                    cartItemDao = db.cartItemDao()
                 )
                 INSTANCE = instance
                 instance

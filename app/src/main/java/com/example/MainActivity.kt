@@ -1,6 +1,9 @@
 package com.example
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -82,6 +85,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Capture the intent that opened the app
+        val intentData: Uri? = intent?.data
+
+        if (intentData != null) {
+            // This will print e.g. "https://nehamycartapp.com"
+            val fullLink = intentData.toString()
+
+            // You can use this to route the user to a specific screen
+            Log.d("MainActivity", "Deep link received: $fullLink")
+            handleDeepLink(intentData)
+        }
 
         setContent {
             CartifyTheme {
@@ -362,5 +377,36 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val intentData: Uri? = intent.data
+        if (intentData != null) {
+            val fullLink = intentData.toString()
+            Log.d("MainActivity", "Deep link received via onNewIntent: $fullLink")
+            handleDeepLink(intentData)
+        }
+    }
+
+    private fun handleDeepLink(uri: Uri) {
+        val fullLink = uri.toString()
+        val path = uri.path.orEmpty().lowercase()
+        when {
+            path.startsWith("/profile") -> {
+                viewModel.selectTab(AppNavTab.RECOMMENDATIONS)
+            }
+            path.startsWith("/cart") -> {
+                viewModel.selectTab(AppNavTab.CART)
+            }
+            path.startsWith("/tracking") || path.startsWith("/orders") -> {
+                viewModel.selectTab(AppNavTab.TRACKING)
+            }
+            else -> {
+                viewModel.selectTab(AppNavTab.SHOP)
+            }
+        }
+        viewModel.showSnackbar("Opened link: $fullLink")
     }
 }

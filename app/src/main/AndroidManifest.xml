@@ -20,10 +20,64 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.MyApplication">
+            <!-- Standard launcher intent filter -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Deep link intent filters for https://nehamycartapp.com -->
+            <intent-filter android:label="Open My Cart">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- Accepts urls that start with https://nehamycartapp.com -->
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="nehamycartapp.com" />
+                <data android:host="www.nehamycartapp.com" />
+                <data android:host="://nehamycartapp.com" />
+                <data android:pathPrefix="/profile" />
+                <data android:pathPrefix="/cart" />
+                <data android:pathPrefix="/tracking" />
+                <data android:pathPrefix="/orders" />
+            </intent-filter>
+
+            <!-- Deep link intent filter for root host https://nehamycartapp.com -->
+            <intent-filter android:label="Open My Cart">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="nehamycartapp.com" />
+                <data android:host="www.nehamycartapp.com" />
+                <data android:host="://nehamycartapp.com" />
+            </intent-filter>
+
+            <!-- Deep link intent filters for legacy myapp.com -->
+            <intent-filter android:label="Open My App">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="://myapp.com" />
+                <data android:host="myapp.com" />
+                <data android:pathPrefix="/profile" />
+            </intent-filter>
+
+            <intent-filter android:label="Open My App">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="myapp.com" />
             </intent-filter>
         </activity>
     </application>

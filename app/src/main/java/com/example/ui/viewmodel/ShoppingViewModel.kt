@@ -171,6 +171,10 @@ class ShoppingViewModel(
         _snackbarEvent.value = null
     }
 
+    fun showSnackbar(message: String) {
+        _snackbarEvent.value = message
+    }
+
     // Checkout flow
     fun checkout(address: String = "785 Oak St, Apt 4B, Metro City") {
         val currentCart = cartItems.value

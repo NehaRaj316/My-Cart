@@ -1,6 +1,8 @@
 package com.example
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.example.data.model.TastePreference
 import com.example.data.model.UserPersona
@@ -10,6 +12,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -65,5 +68,51 @@ class ExampleRobolectricTest {
         val fashionItem = products.find { it.category == "Fashion" }
         assertNotNull(fashionItem)
         assertTrue(fashionItem!!.recommendationScore >= 85)
+    }
+
+    @Test
+    fun `deep link intent filter resolves to MainActivity`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val packageManager = context.packageManager
+
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://myapp.com/profile")).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+            addCategory(Intent.CATEGORY_DEFAULT)
+        }
+        val resolveInfo = packageManager.resolveActivity(intent, 0)
+        assertNotNull("Deep link should resolve to an activity", resolveInfo)
+        assertEquals(MainActivity::class.java.name, resolveInfo?.activityInfo?.name)
+    }
+
+    @Test
+    fun `nehamycartapp com deep link intent filter resolves to MainActivity`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val packageManager = context.packageManager
+
+        // Root url
+        val rootIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://nehamycartapp.com")).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+            addCategory(Intent.CATEGORY_DEFAULT)
+        }
+        val rootResolveInfo = packageManager.resolveActivity(rootIntent, 0)
+        assertNotNull("Root deep link for nehamycartapp.com should resolve to an activity", rootResolveInfo)
+        assertEquals(MainActivity::class.java.name, rootResolveInfo?.activityInfo?.name)
+
+        // Path url
+        val profileIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://nehamycartapp.com/profile")).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+            addCategory(Intent.CATEGORY_DEFAULT)
+        }
+        val profileResolveInfo = packageManager.resolveActivity(profileIntent, 0)
+        assertNotNull("Profile deep link for nehamycartapp.com should resolve to an activity", profileResolveInfo)
+        assertEquals(MainActivity::class.java.name, profileResolveInfo?.activityInfo?.name)
+    }
+
+    @Test
+    fun `main activity handles deep link data`() {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://nehamycartapp.com/profile"))
+        val controller = Robolectric.buildActivity(MainActivity::class.java, intent)
+        val activity = controller.create().start().resume().get()
+        assertNotNull(activity)
     }
 }

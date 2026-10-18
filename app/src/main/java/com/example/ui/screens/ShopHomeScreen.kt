@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -77,6 +78,8 @@ fun ShopHomeScreen(
     onNavigateToTracking: () -> Unit,
     onNavigateToRecommendations: () -> Unit,
     onOpenLinkTester: () -> Unit = {},
+    isGuest: Boolean = false,
+    onRequireSignIn: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val categories = listOf("All", "Fashion", "Groceries", "Tech", "Living", "Fitness")
@@ -90,6 +93,57 @@ fun ShopHomeScreen(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Guest Mode Top Banner
+        if (isGuest) {
+            item(span = { GridItemSpan(2) }) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { onRequireSignIn("Sign in with your Google account to unlock full features, add to cart, and checkout.") }
+                        .testTag("guest_mode_banner"),
+                    color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(text = "👀", fontSize = 22.sp)
+                            Column {
+                                Text(
+                                    text = "Browsing as Guest (Limited Access)",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                                Text(
+                                    text = "Sign in with Google to add to cart, checkout & get AI picks",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f),
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                        Button(
+                            onClick = { onRequireSignIn("Sign in with your Google account to unlock full features, add to cart, and checkout.") },
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                            modifier = Modifier.height(34.dp).testTag("guest_banner_sign_in_btn")
+                        ) {
+                            Text("Sign In", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
         // 1. Live Order Tracker Banner (if an order is currently active!)
         if (activeOrder != null && activeOrder.status != OrderStatus.DELIVERED) {
             item(span = { GridItemSpan(2) }) {

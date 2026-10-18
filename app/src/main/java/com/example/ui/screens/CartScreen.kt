@@ -68,6 +68,8 @@ fun CartScreen(
     onApplyPromo: (String) -> Unit,
     onCheckout: (address: String) -> Unit,
     onStartShopping: () -> Unit,
+    isGuest: Boolean = false,
+    onRequireSignIn: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var promoInput by remember { mutableStateOf(promoCode) }
@@ -78,7 +80,68 @@ fun CartScreen(
     val shipping = 0.0
     val total = (subtotal - discount + shipping).coerceAtLeast(0.0)
 
-    if (cartItems.isEmpty()) {
+    if (isGuest && cartItems.isEmpty()) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(28.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                modifier = Modifier.fillMaxWidth().testTag("guest_cart_card")
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.tertiaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "🔒", fontSize = 32.sp)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Cloud Cart is Locked",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "You are currently browsing as a guest. To add items, sync your cart across devices, and checkout, please sign in with your Google account.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        lineHeight = 19.sp,
+                        fontSize = 13.sp
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Button(
+                        onClick = { onRequireSignIn("Sign in with your Google account to add items to your cart and checkout.") },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("guest_cart_sign_in_btn")
+                    ) {
+                        Text("Sign In with Google Account", fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = onStartShopping,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("guest_cart_browse_btn")
+                    ) {
+                        Text("Browse Catalog")
+                    }
+                }
+            }
+        }
+    } else if (cartItems.isEmpty()) {
         Box(
             modifier = modifier
                 .fillMaxSize()

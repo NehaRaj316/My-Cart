@@ -82,6 +82,8 @@ fun OrderTrackingScreen(
     onToggleSimulation: () -> Unit,
     onAdvanceSimulation: () -> Unit,
     onResetSimulation: () -> Unit,
+    isGuest: Boolean = false,
+    onRequireSignIn: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Active Tracker, 1 = Order History
@@ -95,6 +97,54 @@ fun OrderTrackingScreen(
             .fillMaxSize()
             .testTag("order_tracking_screen")
     ) {
+        if (isGuest) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable { onRequireSignIn("Sign in with your Google account to view and track your actual placed orders.") }
+                    .testTag("guest_tracking_banner"),
+                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.8f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(text = "🚚", fontSize = 18.sp)
+                        Column {
+                            Text(
+                                text = "Guest Simulation Mode",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                            Text(
+                                text = "Sign in with Google to view real orders",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                    Button(
+                        onClick = { onRequireSignIn("Sign in with your Google account to view and track your actual placed orders.") },
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        modifier = Modifier.height(30.dp)
+                    ) {
+                        Text("Sign In", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
         // Tab selector: Active Tracking vs Past Orders
         TabRow(
             selectedTabIndex = selectedTab,

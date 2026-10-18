@@ -66,6 +66,8 @@ fun RecommendationsScreen(
     onProductClick: (Product) -> Unit,
     onWishlistToggle: (String) -> Unit,
     onAddToCart: (Product) -> Unit,
+    isGuest: Boolean = false,
+    onRequireSignIn: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -75,6 +77,52 @@ fun RecommendationsScreen(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Guest Mode Notice
+        if (isGuest) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                    modifier = Modifier.fillMaxWidth().testTag("guest_recommendations_banner")
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(text = "🔒", fontSize = 22.sp)
+                            Column {
+                                Text(
+                                    text = "AI Picks Preview (Guest Mode)",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                                Text(
+                                    text = "Showing generic popular picks. Sign in with your Google account to calibrate your custom AI persona.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f),
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                        Button(
+                            onClick = { onRequireSignIn("Sign in with your Google account to customize style personas and unlock personalized AI picks.") },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().testTag("guest_rec_sign_in_btn")
+                        ) {
+                            Text("Sign in with Google Account", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
         // 1. Header Banner
         item {
             Card(

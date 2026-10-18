@@ -34,10 +34,12 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.credentials.CredentialManager
 import com.example.ui.screens.AuthScreen
+import com.example.ui.screens.SignInPromptDialog
 import com.example.ui.screens.attemptAutoSignIn
 import com.example.ui.screens.signOut
 import com.google.firebase.auth.FirebaseAuth
@@ -137,11 +139,17 @@ class MainActivity : ComponentActivity() {
                 }
 
                 var currentUser by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
+                var isGuestMode by remember { mutableStateOf(false) }
+                var showSignInPrompt by remember { mutableStateOf(false) }
+                var signInPromptReason by remember { mutableStateOf("Sign in with your Google account to unlock full features.") }
 
                 DisposableEffect(Unit) {
                     val auth = FirebaseAuth.getInstance()
                     val listener = FirebaseAuth.AuthStateListener { fbAuth ->
                         currentUser = fbAuth.currentUser
+                        if (fbAuth.currentUser != null) {
+                            isGuestMode = false
+                        }
                     }
                     auth.addAuthStateListener(listener)
                     onDispose {
@@ -157,6 +165,7 @@ class MainActivity : ComponentActivity() {
                             credentialManager = credentialManager,
                             onAuthSuccess = {
                                 currentUser = FirebaseAuth.getInstance().currentUser
+                                isGuestMode = false
                             },
                             onUnauthenticated = {},
                             scope = coroutineScope
@@ -164,11 +173,16 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                if (currentUser == null) {
+                if (currentUser == null && !isGuestMode) {
                     AuthScreen(
                         onAuthSuccess = {
                             currentUser = FirebaseAuth.getInstance().currentUser
+                            isGuestMode = false
                             viewModel.showSnackbar("Welcome ${currentUser?.displayName ?: "back"}!")
+                        },
+                        onBrowseAsGuest = {
+                            isGuestMode = true
+                            viewModel.showSnackbar("Browsing as Guest. Sign in anytime to unlock full cart and features.")
                         }
                     )
                 } else {
@@ -212,54 +226,89 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    // Wishlist indicator button
-                                    Surface(
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                                        modifier = Modifier
-                                            .padding(end = 4.dp)
-                                            .testTag("top_bar_wishlist")
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                                            verticalAlignment = Alignment.CenterVertically
+                                    if (currentUser == null) {
+                                        // Guest Mode indicator & Sign In button
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = MaterialTheme.colorScheme.primaryContainer,
+                                            modifier = Modifier
+                                                .padding(end = 4.dp)
+                                                .clickable {
+                                                    signInPromptReason = "Sign in with your Google account to unlock cloud cart, AI recommendations, and checkout."
+                                                    showSignInPrompt = true
+                                                }
+                                                .testTag("top_bar_guest_sign_in")
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Lock,
+                                                    contentDescription = "Sign In",
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                                Text(
+                                                    text = "Sign In",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+                                    } else {
+                                        // Wishlist indicator button
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                            modifier = Modifier
+                                                .padding(end = 4.dp)
+                                                .testTag("top_bar_wishlist")
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Favorite,
+                                                    contentDescription = "Wishlist count",
+                                                    tint = Color(0xFFF43F5E),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = "${wishlistIds.size}",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+
+                                        // Logout / Sign Out Button
+                                        IconButton(
+                                            onClick = {
+                                                val credentialManager = CredentialManager.create(this@MainActivity)
+                                                signOut(
+                                                    context = this@MainActivity,
+                                                    credentialManager = credentialManager,
+                                                    onSignOutComplete = {
+                                                        currentUser = null
+                                                        isGuestMode = false
+                                                        viewModel.showSnackbar("Signed out")
+                                                    },
+                                                    scope = coroutineScope
+                                                )
+                                            },
+                                            modifier = Modifier.testTag("top_bar_sign_out_button")
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Default.Favorite,
-                                                contentDescription = "Wishlist count",
-                                                tint = Color(0xFFF43F5E),
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                text = "${wishlistIds.size}",
-                                                style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = FontWeight.Bold
+                                                imageVector = Icons.Default.Logout,
+                                                contentDescription = "Sign Out",
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
-                                    }
-
-                                    // Logout / Sign Out Button
-                                    IconButton(
-                                        onClick = {
-                                            val credentialManager = CredentialManager.create(this@MainActivity)
-                                            signOut(
-                                                context = this@MainActivity,
-                                                credentialManager = credentialManager,
-                                                onSignOutComplete = {
-                                                    currentUser = null
-                                                    viewModel.showSnackbar("Signed out")
-                                                },
-                                                scope = coroutineScope
-                                            )
-                                        },
-                                        modifier = Modifier.testTag("top_bar_sign_out_button")
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Logout,
-                                            contentDescription = "Sign Out",
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
                                     }
                                 },
                                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -390,11 +439,30 @@ class MainActivity : ComponentActivity() {
                                     onSearchChange = viewModel::onSearchQueryChange,
                                     onCategorySelect = viewModel::onSelectCategory,
                                     onProductClick = viewModel::openProductDetail,
-                                    onWishlistToggle = viewModel::toggleWishlist,
-                                    onAddToCart = viewModel::addToCart,
+                                    onWishlistToggle = { id ->
+                                        if (currentUser == null) {
+                                            signInPromptReason = "Sign in with your Google account to save items to your wishlist."
+                                            showSignInPrompt = true
+                                        } else {
+                                            viewModel.toggleWishlist(id)
+                                        }
+                                    },
+                                    onAddToCart = { product ->
+                                        if (currentUser == null) {
+                                            signInPromptReason = "Sign in with your Google account to add \"${product.title}\" to your cart and checkout."
+                                            showSignInPrompt = true
+                                        } else {
+                                            viewModel.addToCart(product)
+                                        }
+                                    },
                                     onNavigateToTracking = { viewModel.selectTab(AppNavTab.TRACKING) },
                                     onNavigateToRecommendations = { viewModel.selectTab(AppNavTab.RECOMMENDATIONS) },
-                                    onOpenLinkTester = { showDeepLinkDialog = true }
+                                    onOpenLinkTester = { showDeepLinkDialog = true },
+                                    isGuest = currentUser == null,
+                                    onRequireSignIn = { reason ->
+                                        signInPromptReason = reason
+                                        showSignInPrompt = true
+                                    }
                                 )
                             }
                             AppNavTab.RECOMMENDATIONS -> {
@@ -402,11 +470,44 @@ class MainActivity : ComponentActivity() {
                                     recommendedProducts = recommendedProducts,
                                     wishlistIds = wishlistIds,
                                     userTaste = userTaste,
-                                    onPersonaSelected = viewModel::updateUserPersona,
-                                    onFilterToggle = viewModel::toggleTasteFilter,
+                                    onPersonaSelected = { persona ->
+                                        if (currentUser == null) {
+                                            signInPromptReason = "Sign in with your Google account to customize style personas and unlock personalized AI picks."
+                                            showSignInPrompt = true
+                                        } else {
+                                            viewModel.updateUserPersona(persona)
+                                        }
+                                    },
+                                    onFilterToggle = { budget, fastDelivery, highRated ->
+                                        if (currentUser == null) {
+                                            signInPromptReason = "Sign in with your Google account to customize AI taste filters."
+                                            showSignInPrompt = true
+                                        } else {
+                                            viewModel.toggleTasteFilter(budget, fastDelivery, highRated)
+                                        }
+                                    },
                                     onProductClick = viewModel::openProductDetail,
-                                    onWishlistToggle = viewModel::toggleWishlist,
-                                    onAddToCart = viewModel::addToCart
+                                    onWishlistToggle = { id ->
+                                        if (currentUser == null) {
+                                            signInPromptReason = "Sign in with your Google account to save items to your wishlist."
+                                            showSignInPrompt = true
+                                        } else {
+                                            viewModel.toggleWishlist(id)
+                                        }
+                                    },
+                                    onAddToCart = { product ->
+                                        if (currentUser == null) {
+                                            signInPromptReason = "Sign in with your Google account to add \"${product.title}\" to your cart."
+                                            showSignInPrompt = true
+                                        } else {
+                                            viewModel.addToCart(product)
+                                        }
+                                    },
+                                    isGuest = currentUser == null,
+                                    onRequireSignIn = { reason ->
+                                        signInPromptReason = reason
+                                        showSignInPrompt = true
+                                    }
                                 )
                             }
                             AppNavTab.TRACKING -> {
@@ -416,7 +517,12 @@ class MainActivity : ComponentActivity() {
                                     isSimulationPlaying = isSimulationPlaying,
                                     onToggleSimulation = viewModel::toggleLiveSimulation,
                                     onAdvanceSimulation = viewModel::advanceSimulationStep,
-                                    onResetSimulation = viewModel::resetSimulation
+                                    onResetSimulation = viewModel::resetSimulation,
+                                    isGuest = currentUser == null,
+                                    onRequireSignIn = { reason ->
+                                        signInPromptReason = reason
+                                        showSignInPrompt = true
+                                    }
                                 )
                             }
                             AppNavTab.CART -> {
@@ -426,8 +532,20 @@ class MainActivity : ComponentActivity() {
                                     isPromoApplied = isPromoApplied,
                                     onUpdateQuantity = viewModel::updateCartQuantity,
                                     onApplyPromo = viewModel::applyPromoCode,
-                                    onCheckout = { address -> viewModel.checkout(address) },
-                                    onStartShopping = { viewModel.selectTab(AppNavTab.SHOP) }
+                                    onCheckout = { address ->
+                                        if (currentUser == null) {
+                                            signInPromptReason = "Sign in with your Google account to complete checkout and place orders."
+                                            showSignInPrompt = true
+                                        } else {
+                                            viewModel.checkout(address)
+                                        }
+                                    },
+                                    onStartShopping = { viewModel.selectTab(AppNavTab.SHOP) },
+                                    isGuest = currentUser == null,
+                                    onRequireSignIn = { reason ->
+                                        signInPromptReason = reason
+                                        showSignInPrompt = true
+                                    }
                                 )
                             }
                         }
@@ -439,13 +557,30 @@ class MainActivity : ComponentActivity() {
                                 isWishlisted = wishlistIds.contains(product.id),
                                 sheetState = sheetState,
                                 onDismiss = viewModel::closeProductDetail,
-                                onWishlistToggle = { viewModel.toggleWishlist(product.id) },
+                                onWishlistToggle = {
+                                    if (currentUser == null) {
+                                        signInPromptReason = "Sign in with your Google account to save favorites to your wishlist."
+                                        showSignInPrompt = true
+                                    } else {
+                                        viewModel.toggleWishlist(product.id)
+                                    }
+                                },
                                 onAddToCart = { selectedColor ->
-                                    viewModel.addToCart(product, selectedColor)
+                                    if (currentUser == null) {
+                                        signInPromptReason = "Sign in with your Google account to add \"${product.title}\" to your cart."
+                                        showSignInPrompt = true
+                                    } else {
+                                        viewModel.addToCart(product, selectedColor)
+                                    }
                                 },
                                 onBuyNow = { selectedColor ->
-                                    viewModel.addToCart(product, selectedColor)
-                                    viewModel.selectTab(AppNavTab.CART)
+                                    if (currentUser == null) {
+                                        signInPromptReason = "Sign in with your Google account to proceed to checkout."
+                                        showSignInPrompt = true
+                                    } else {
+                                        viewModel.addToCart(product, selectedColor)
+                                        viewModel.selectTab(AppNavTab.CART)
+                                    }
                                 }
                             )
                         }
@@ -459,6 +594,20 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onShowMessage = { msg ->
                                     viewModel.showSnackbar(msg)
+                                }
+                            )
+                        }
+
+                        // Sign In Prompt Modal for Guest Mode
+                        if (showSignInPrompt) {
+                            SignInPromptDialog(
+                                reason = signInPromptReason,
+                                onDismiss = { showSignInPrompt = false },
+                                onSignInSuccess = {
+                                    currentUser = FirebaseAuth.getInstance().currentUser
+                                    isGuestMode = false
+                                    showSignInPrompt = false
+                                    viewModel.showSnackbar("Welcome ${currentUser?.displayName ?: "back"}!")
                                 }
                             )
                         }

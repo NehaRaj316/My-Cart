@@ -97,15 +97,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Capture the intent that opened the app
+        // Capture incoming deep link or Firebase Dynamic Link
         val intentData: Uri? = intent?.data
-
         if (intentData != null) {
-            // This will print e.g. "https://nehamycartapp.com"
             val fullLink = intentData.toString()
-
-            // You can use this to route the user to a specific screen
-            Log.d("MainActivity", "Deep link received: $fullLink")
+            Log.d("MainActivity", "Incoming link received in onCreate: $fullLink")
             handleDeepLink(intentData)
         }
 
@@ -489,9 +485,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleDeepLink(uri: Uri) {
+        // Support wrapped links inside Firebase Dynamic Links (e.g. ?link=https://nehamycartapp.com/cart)
+        val targetUri = uri.getQueryParameter("link")?.let { runCatching { Uri.parse(it) }.getOrNull() } ?: uri
         val fullLink = uri.toString()
-        val path = uri.path.orEmpty().lowercase()
-        val host = uri.host.orEmpty().lowercase()
+        val path = targetUri.path.orEmpty().lowercase()
+        val host = targetUri.host.orEmpty().lowercase()
         when {
             path.startsWith("/profile") || host == "profile" || path.startsWith("/recommendations") || host == "recommendations" -> {
                 viewModel.selectTab(AppNavTab.RECOMMENDATIONS)

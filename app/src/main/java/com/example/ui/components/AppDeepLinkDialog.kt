@@ -71,34 +71,40 @@ fun AppDeepLinkDialog(
     val linkOptions = remember {
         listOf(
             DeepLinkOption(
-                title = "Store Home",
+                title = "Firebase Dynamic Link (Cart)",
+                icon = "🔥",
+                url = "https://nehamycartapp.page.link/cart",
+                description = "Firebase Dynamic Link routing straight to Cart"
+            ),
+            DeepLinkOption(
+                title = "Firebase Dynamic Link (Profile)",
+                icon = "✨",
+                url = "https://nehamycartapp.page.link/profile",
+                description = "Firebase Dynamic Link to AI Recommendations"
+            ),
+            DeepLinkOption(
+                title = "Firebase Dynamic Link (Tracking)",
+                icon = "🚚",
+                url = "https://nehamycartapp.page.link/tracking",
+                description = "Firebase Dynamic Link to Live Order Tracking"
+            ),
+            DeepLinkOption(
+                title = "Store Home Domain",
                 icon = "🛍️",
                 url = "https://nehamycartapp.com",
-                description = "Opens Discover storefront"
+                description = "Direct web domain for Shop Discover"
             ),
             DeepLinkOption(
-                title = "Shopping Cart",
+                title = "Shopping Cart Web Link",
                 icon = "🛒",
                 url = "https://nehamycartapp.com/cart",
-                description = "Jumps straight to cart & checkout"
+                description = "Direct web URL to cart & checkout"
             ),
             DeepLinkOption(
-                title = "AI Recommendations",
-                icon = "✨",
-                url = "https://nehamycartapp.com/profile",
-                description = "Personalized taste curation & profile"
-            ),
-            DeepLinkOption(
-                title = "Live Order Tracking",
-                icon = "🚚",
-                url = "https://nehamycartapp.com/tracking",
-                description = "Live simulated delivery route & ETA"
-            ),
-            DeepLinkOption(
-                title = "Direct App Scheme (Zero DNS)",
+                title = "Zero-DNS Scheme (Instant App Launch)",
                 icon = "⚡",
                 url = "nehamycartapp://open",
-                description = "Never fails DNS lookup on any device"
+                description = "Bypasses web DNS; opens app reliably on any device"
             )
         )
     }
@@ -171,14 +177,14 @@ fun AppDeepLinkDialog(
                         )
                         Column {
                             Text(
-                                text = "How App Links Work",
+                                text = "Firebase & App Deep Links",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "nehamycartapp.com is registered in AndroidManifest.xml as an Android Deep Link for this application. Desktop browsers show 'DNS_PROBE_FINISHED_NXDOMAIN' because it is not a hosted website on the web. On Android, clicking any link below launches this app directly!",
+                                text = "This app supports Firebase Dynamic Links (nehamycartapp.page.link), web links (nehamycartapp.com), and custom schemes (nehamycartapp://). When opening in an external desktop browser without a live web host, browsers report DNS NXDOMAIN. On Android, clicking any link or Firebase Dynamic Link launches this app directly!",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f),
                                 lineHeight = 16.sp

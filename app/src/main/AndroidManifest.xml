@@ -39,6 +39,22 @@
                 <data android:host="://nehamycartapp.com" />
             </intent-filter>
 
+            <!-- FIREBASE DYNAMIC LINKS & HOSTING INTENT FILTER -->
+            <intent-filter android:label="Open My Cart with Firebase">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:scheme="http" />
+                <data android:host="nehamycartapp.page.link" />
+                <data android:host="nehamycart.page.link" />
+                <data android:host="mycart.page.link" />
+                <data android:host="gen-lang-client-0552066446.page.link" />
+                <data android:host="gen-lang-client-0552066446.web.app" />
+                <data android:host="gen-lang-client-0552066446.firebaseapp.com" />
+            </intent-filter>
+
             <!-- Custom scheme deep links (No DNS needed; opens directly when clicked) -->
             <intent-filter android:label="Open My Cart">
                 <action android:name="android.intent.action.VIEW" />

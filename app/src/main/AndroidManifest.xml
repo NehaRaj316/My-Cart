@@ -26,7 +26,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- UPDATED DEEP LINK INTENT FILTER -->
+            <!-- Web and App Link intent filter -->
             <intent-filter android:label="Open Neha My Cart">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -36,7 +36,8 @@
                 <data android:scheme="https" />
                 <data android:host="nehamycartapp.com" />
                 <data android:host="www.nehamycartapp.com" />
-                <data android:host="://nehamycartapp.com" />
+                <data android:host="myapp.com" />
+                <data android:host="www.myapp.com" />
             </intent-filter>
 
             <!-- FIREBASE DYNAMIC LINKS & HOSTING INTENT FILTER -->
@@ -53,10 +54,12 @@
                 <data android:host="gen-lang-client-0552066446.page.link" />
                 <data android:host="gen-lang-client-0552066446.web.app" />
                 <data android:host="gen-lang-client-0552066446.firebaseapp.com" />
+                <data android:host="ais-dev-g6emuc2l2lgegn2m2u6rtm-955582739602.asia-southeast1.run.app" />
+                <data android:host="ais-pre-g6emuc2l2lgegn2m2u6rtm-955582739602.asia-southeast1.run.app" />
             </intent-filter>
 
-            <!-- Custom scheme deep links (No DNS needed; opens directly when clicked) -->
-            <intent-filter android:label="Open My Cart">
+            <!-- Custom scheme deep links (Works instantly without DNS or web domain) -->
+            <intent-filter android:label="Open My Cart Scheme">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -64,29 +67,6 @@
                 <data android:scheme="nehamycartapp" />
                 <data android:scheme="nehamycart" />
                 <data android:scheme="mycart" />
-            </intent-filter>
-
-            <!-- Deep link intent filters for legacy myapp.com -->
-            <intent-filter android:label="Open My App">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-                <data android:host="://myapp.com" />
-                <data android:host="myapp.com" />
-                <data android:pathPrefix="/profile" />
-            </intent-filter>
-
-            <intent-filter android:label="Open My App">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-                <data android:host="myapp.com" />
             </intent-filter>
         </activity>
     </application>

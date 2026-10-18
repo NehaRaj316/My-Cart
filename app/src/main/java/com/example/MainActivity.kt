@@ -41,6 +41,7 @@ import com.example.ui.screens.AuthScreen
 import com.example.ui.screens.attemptAutoSignIn
 import com.example.ui.screens.signOut
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -97,13 +98,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Capture incoming deep link or Firebase Dynamic Link
-        val intentData: Uri? = intent?.data
-        if (intentData != null) {
-            val fullLink = intentData.toString()
-            Log.d("MainActivity", "Incoming link received in onCreate: $fullLink")
-            handleDeepLink(intentData)
-        }
+        // Process incoming Firebase Dynamic Links and deep links
+        processIncomingLink(intent)
 
         setContent {
             CartifyTheme {
@@ -476,28 +472,80 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        val intentData: Uri? = intent.data
-        if (intentData != null) {
-            val fullLink = intentData.toString()
-            Log.d("MainActivity", "Deep link received via onNewIntent: $fullLink")
-            handleDeepLink(intentData)
+        processIncomingLink(intent)
+    }
+
+    private fun processIncomingLink(incomingIntent: Intent?) {
+        if (incomingIntent == null) return
+
+        // 1. Process Firebase Dynamic Link via SDK
+        try {
+            FirebaseDynamicLinks.getInstance()
+                .getDynamicLink(incomingIntent)
+                .addOnSuccessListener(this) { pendingDynamicLinkData ->
+                    val dynamicLinkUri = pendingDynamicLinkData?.link
+                    if (dynamicLinkUri != null) {
+                        Log.d("MainActivity", "Firebase Dynamic Link detected: $dynamicLinkUri")
+                        handleDeepLink(dynamicLinkUri)
+                    } else {
+                        // 2. Fall back to standard deep link / app link from Intent data
+                        val intentData = incomingIntent.data
+                        if (intentData != null) {
+                            Log.d("MainActivity", "Standard deep link detected: $intentData")
+                            handleDeepLink(intentData)
+                        }
+                    }
+                }
+                .addOnFailureListener(this) { e ->
+                    Log.w("MainActivity", "Could not fetch dynamic link", e)
+                    val intentData = incomingIntent.data
+                    if (intentData != null) {
+                        handleDeepLink(intentData)
+                    }
+                }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error in FirebaseDynamicLinks resolution", e)
+            incomingIntent.data?.let { handleDeepLink(it) }
         }
     }
 
     private fun handleDeepLink(uri: Uri) {
-        // Support wrapped links inside Firebase Dynamic Links (e.g. ?link=https://nehamycartapp.com/cart)
-        val targetUri = uri.getQueryParameter("link")?.let { runCatching { Uri.parse(it) }.getOrNull() } ?: uri
+        // Support unwrapping nested links inside Firebase Dynamic Links or query parameters (e.g. ?link=... or ?deep_link_id=...)
+        val targetUri = uri.getQueryParameter("link")?.let { runCatching { Uri.parse(it) }.getOrNull() }
+            ?: uri.getQueryParameter("deep_link_id")?.let { runCatching { Uri.parse(it) }.getOrNull() }
+            ?: uri
+
         val fullLink = uri.toString()
         val path = targetUri.path.orEmpty().lowercase()
         val host = targetUri.host.orEmpty().lowercase()
+        val segments = targetUri.pathSegments ?: emptyList()
+
+        // 1. Check for product detail linking: /product/{id} or ?product_id={id} or ?id={id}
+        val productIdFromQuery = targetUri.getQueryParameter("product_id") ?: targetUri.getQueryParameter("id")
+        val productIdFromPath = if (segments.size >= 2 && segments[0].equals("product", ignoreCase = true)) {
+            segments[1]
+        } else null
+
+        val targetProductId = productIdFromQuery ?: productIdFromPath
+        if (!targetProductId.isNullOrBlank()) {
+            val opened = viewModel.openProductById(targetProductId)
+            if (opened) {
+                viewModel.showSnackbar("Opened product: $targetProductId")
+                return
+            }
+        }
+
+        // 2. Tab routing
         when {
-            path.startsWith("/profile") || host == "profile" || path.startsWith("/recommendations") || host == "recommendations" -> {
+            path.startsWith("/profile") || host == "profile" ||
+            path.startsWith("/recommendations") || host == "recommendations" -> {
                 viewModel.selectTab(AppNavTab.RECOMMENDATIONS)
             }
             path.startsWith("/cart") || host == "cart" -> {
                 viewModel.selectTab(AppNavTab.CART)
             }
-            path.startsWith("/tracking") || host == "tracking" || path.startsWith("/orders") || host == "orders" -> {
+            path.startsWith("/tracking") || host == "tracking" ||
+            path.startsWith("/orders") || host == "orders" -> {
                 viewModel.selectTab(AppNavTab.TRACKING)
             }
             else -> {

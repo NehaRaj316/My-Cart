@@ -123,6 +123,16 @@ class ShoppingViewModel(
         _selectedProductDetail.value = product
     }
 
+    fun openProductById(productId: String): Boolean {
+        val found = repository.products.value.find { it.id.equals(productId, ignoreCase = true) }
+        if (found != null) {
+            _selectedProductDetail.value = found
+            _currentTab.value = AppNavTab.SHOP
+            return true
+        }
+        return false
+    }
+
     fun closeProductDetail() {
         _selectedProductDetail.value = null
     }

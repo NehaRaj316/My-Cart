@@ -20,11 +20,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -360,36 +365,38 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.testTag("nav_tab_recommendations")
                             )
 
-                            // 3. Live Tracking Tab
-                            val hasLiveOrder = activeOrder != null && activeOrder?.status != OrderStatus.DELIVERED
-                            NavigationBarItem(
-                                selected = currentTab == AppNavTab.TRACKING,
-                                onClick = { viewModel.selectTab(AppNavTab.TRACKING) },
-                                icon = {
-                                    BadgedBox(
-                                        badge = {
-                                            if (hasLiveOrder) {
-                                                Badge(
-                                                    containerColor = Color(0xFF10B981)
-                                                ) {
-                                                    Text("LIVE")
+                            // 3. Live Tracking Tab (AUTHENTICATED USERS ONLY)
+                            if (currentUser != null) {
+                                val hasLiveOrder = activeOrder != null && activeOrder?.status != OrderStatus.DELIVERED
+                                NavigationBarItem(
+                                    selected = currentTab == AppNavTab.TRACKING,
+                                    onClick = { viewModel.selectTab(AppNavTab.TRACKING) },
+                                    icon = {
+                                        BadgedBox(
+                                            badge = {
+                                                if (hasLiveOrder) {
+                                                    Badge(
+                                                        containerColor = Color(0xFF10B981)
+                                                    ) {
+                                                        Text("LIVE")
+                                                    }
                                                 }
                                             }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.DirectionsBike,
+                                                contentDescription = "Order Tracking"
+                                            )
                                         }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.DirectionsBike,
-                                            contentDescription = "Order Tracking"
-                                        )
-                                    }
-                                },
-                                label = { Text("Live Track") },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = MaterialTheme.colorScheme.onPrimary,
-                                    indicatorColor = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier.testTag("nav_tab_tracking")
-                            )
+                                    },
+                                    label = { Text("Live Track") },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                                        indicatorColor = MaterialTheme.colorScheme.primary
+                                    ),
+                                    modifier = Modifier.testTag("nav_tab_tracking")
+                                )
+                            }
 
                             // 4. Cart Tab
                             val totalCartCount = cartItems.sumOf { it.quantity }
@@ -455,7 +462,14 @@ class MainActivity : ComponentActivity() {
                                             viewModel.addToCart(product)
                                         }
                                     },
-                                    onNavigateToTracking = { viewModel.selectTab(AppNavTab.TRACKING) },
+                                    onNavigateToTracking = {
+                                        if (currentUser == null) {
+                                            signInPromptReason = "Sign in with your Google account to access live order tracking."
+                                            showSignInPrompt = true
+                                        } else {
+                                            viewModel.selectTab(AppNavTab.TRACKING)
+                                        }
+                                    },
                                     onNavigateToRecommendations = { viewModel.selectTab(AppNavTab.RECOMMENDATIONS) },
                                     onOpenLinkTester = { showDeepLinkDialog = true },
                                     isGuest = currentUser == null,
@@ -511,19 +525,98 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             AppNavTab.TRACKING -> {
-                                OrderTrackingScreen(
-                                    activeOrder = activeOrder,
-                                    pastOrders = pastOrders,
-                                    isSimulationPlaying = isSimulationPlaying,
-                                    onToggleSimulation = viewModel::toggleLiveSimulation,
-                                    onAdvanceSimulation = viewModel::advanceSimulationStep,
-                                    onResetSimulation = viewModel::resetSimulation,
-                                    isGuest = currentUser == null,
-                                    onRequireSignIn = { reason ->
-                                        signInPromptReason = reason
-                                        showSignInPrompt = true
+                                if (currentUser == null) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(24.dp)
+                                            .testTag("tracking_auth_required_container"),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .testTag("tracking_auth_required_card"),
+                                            shape = RoundedCornerShape(24.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.surface
+                                            ),
+                                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                                        ) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(28.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(72.dp)
+                                                        .clip(CircleShape)
+                                                        .background(MaterialTheme.colorScheme.primaryContainer),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(text = "🔒", fontSize = 34.sp)
+                                                }
+
+                                                Text(
+                                                    text = "Authentication Required",
+                                                    style = MaterialTheme.typography.titleLarge,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+
+                                                Text(
+                                                    text = "Order tracking is only available for authenticated accounts. Please sign in with your Google account to track your orders.",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                                )
+
+                                                Spacer(modifier = Modifier.height(4.dp))
+
+                                                Button(
+                                                    onClick = {
+                                                        signInPromptReason = "Sign in with your Google account to access live order tracking."
+                                                        showSignInPrompt = true
+                                                    },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(48.dp)
+                                                        .testTag("tracking_sign_in_button"),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                ) {
+                                                    Text("Sign In with Google Account", fontWeight = FontWeight.Bold)
+                                                }
+
+                                                OutlinedButton(
+                                                    onClick = { viewModel.selectTab(AppNavTab.SHOP) },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(44.dp),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                ) {
+                                                    Text("Back to Discover")
+                                                }
+                                            }
+                                        }
                                     }
-                                )
+                                } else {
+                                    OrderTrackingScreen(
+                                        activeOrder = activeOrder,
+                                        pastOrders = pastOrders,
+                                        isSimulationPlaying = isSimulationPlaying,
+                                        onToggleSimulation = viewModel::toggleLiveSimulation,
+                                        onAdvanceSimulation = viewModel::advanceSimulationStep,
+                                        onResetSimulation = viewModel::resetSimulation,
+                                        isGuest = false,
+                                        onRequireSignIn = { reason ->
+                                            signInPromptReason = reason
+                                            showSignInPrompt = true
+                                        }
+                                    )
+                                }
                             }
                             AppNavTab.CART -> {
                                 CartScreen(
@@ -695,7 +788,12 @@ class MainActivity : ComponentActivity() {
             }
             path.startsWith("/tracking") || host == "tracking" ||
             path.startsWith("/orders") || host == "orders" -> {
-                viewModel.selectTab(AppNavTab.TRACKING)
+                if (FirebaseAuth.getInstance().currentUser == null) {
+                    viewModel.showSnackbar("Sign in with Google to access order tracking.")
+                    viewModel.selectTab(AppNavTab.SHOP)
+                } else {
+                    viewModel.selectTab(AppNavTab.TRACKING)
+                }
             }
             else -> {
                 viewModel.selectTab(AppNavTab.SHOP)

@@ -144,8 +144,8 @@ fun ShopHomeScreen(
             }
         }
 
-        // 1. Live Order Tracker Banner (if an order is currently active!)
-        if (activeOrder != null && activeOrder.status != OrderStatus.DELIVERED) {
+        // 1. Live Order Tracker Banner (ONLY when authenticated!)
+        if (!isGuest && activeOrder != null && activeOrder.status != OrderStatus.DELIVERED) {
             item(span = { GridItemSpan(2) }) {
                 Surface(
                     modifier = Modifier

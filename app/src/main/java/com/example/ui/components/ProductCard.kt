@@ -233,13 +233,14 @@ fun ProductCard(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Product Title
+            // Product Name
             Text(
-                text = product.title,
+                text = product.name,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.testTag("product_name_${product.id}")
             )
 
             // Subtitle
@@ -254,7 +255,7 @@ fun ProductCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Price & Add to Cart button
+            // Price in INR & Add to Cart button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -265,7 +266,8 @@ fun ProductCard(
                         text = CurrencyUtil.formatRupees(product.price),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.testTag("product_price_${product.id}")
                     )
                     if (product.originalPrice != null) {
                         Text(

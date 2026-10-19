@@ -98,51 +98,70 @@ fun OrderTrackingScreen(
             .testTag("order_tracking_screen")
     ) {
         if (isGuest) {
-            Surface(
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .clickable { onRequireSignIn("Sign in with your Google account to view and track your actual placed orders.") }
-                    .testTag("guest_tracking_banner"),
-                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.8f)
+                    .fillMaxSize()
+                    .padding(24.dp)
+                    .testTag("tracking_auth_required_container"),
+                contentAlignment = Alignment.Center
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("tracking_auth_required_card"),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.weight(1f)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(28.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text(text = "🚚", fontSize = 18.sp)
-                        Column {
-                            Text(
-                                text = "Guest Simulation Mode",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                            Text(
-                                text = "Sign in with Google to view real orders",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
-                            )
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "🔒", fontSize = 34.sp)
                         }
-                    }
-                    Button(
-                        onClick = { onRequireSignIn("Sign in with your Google account to view and track your actual placed orders.") },
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                        modifier = Modifier.height(30.dp)
-                    ) {
-                        Text("Sign In", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+
+                        Text(
+                            text = "Authentication Required",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Text(
+                            text = "Order tracking, delivery telemetry, and live courier status are strictly protected and require Google Account authentication. Please sign in to view your orders.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Button(
+                            onClick = { onRequireSignIn("Sign in with your Google account to access live order tracking.") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .testTag("tracking_sign_in_button"),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Sign In with Google Account", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
+            return
         }
 
         // Tab selector: Active Tracking vs Past Orders

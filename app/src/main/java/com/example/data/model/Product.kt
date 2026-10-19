@@ -21,4 +21,9 @@ data class Product(
     val recommendationReason: String = "High affinity match based on your preferences",
     val primaryColorHex: Long = 0xFF4F46E5,
     @DrawableRes val imageRes: Int? = null
-)
+) {
+    val name: String get() = title
+    val priceInInr: Double get() = price
+    val currency: String get() = "INR"
+    val formattedPriceInInr: String get() = "₹%,.0f".format(price)
+}

@@ -312,4 +312,172 @@ class RoomDatabaseTest {
         assertEquals(0, cartItemDao.getCartItemCount())
         assertTrue(cartItemDao.getAllCartItemsSync().isEmpty())
     }
+
+    @Test
+    fun storeAndRetrieveProductWithNamePriceInInrAndDescription() = runBlocking {
+        productDao.deleteAll()
+        assertEquals(0, productDao.getProductCount())
+
+        // Create product with name, price in INR, and description
+        val product = ProductEntity(
+            name = "Pure Katan Banarasi Saree",
+            price = 3499.0, // In INR
+            description = "Hand-woven Banarasi silk with exquisite golden floral zari work"
+        )
+
+        assertEquals("Pure Katan Banarasi Saree", product.name)
+        assertEquals(3499.0, product.price, 0.001)
+        assertEquals(3499.0, product.priceInInr, 0.001)
+        assertEquals("INR", product.currency)
+        assertEquals("₹3,499", product.formattedPriceInInr)
+        assertTrue(product.description.contains("Banarasi silk"))
+
+        // Store in database
+        val rowId = productDao.insert(product)
+        assertTrue("SQLite rowid should be > 0", rowId > 0)
+        assertEquals(1, productDao.getProductCount())
+
+        // Retrieve by ID
+        val retrievedById = productDao.getProductByIdSync(product.id)
+        assertNotNull(retrievedById)
+        assertEquals("Pure Katan Banarasi Saree", retrievedById?.name)
+        assertEquals(3499.0, retrievedById?.priceInInr ?: 0.0, 0.001)
+        assertEquals("INR", retrievedById?.currency)
+        assertEquals("Hand-woven Banarasi silk with exquisite golden floral zari work", retrievedById?.description)
+
+        // Retrieve by name
+        val retrievedByName = productDao.getProductByName("Pure Katan Banarasi Saree")
+        assertNotNull(retrievedByName)
+        assertEquals(product.id, retrievedByName?.id)
+        assertEquals(3499.0, retrievedByName?.price ?: 0.0, 0.001)
+
+        // Retrieve via Flow
+        val flowProducts = productDao.getAllProducts().first()
+        assertEquals(1, flowProducts.size)
+        assertEquals("Pure Katan Banarasi Saree", flowProducts[0].name)
+    }
+
+    @Test
+    fun retrieveProductsByInrPriceRangeAndSorting() = runBlocking {
+        productDao.deleteAll()
+
+        val p1 = ProductEntity(name = "Organic Turmeric Powder", price = 150.0, description = "Freshly ground Lakadong turmeric")
+        val p2 = ProductEntity(name = "A2 Vedic Cow Bilona Ghee", price = 750.0, description = "Pure grass-fed cow ghee")
+        val p3 = ProductEntity(name = "Royal Basmati Rice 5kg", price = 1200.0, description = "Extra long aged aromatic grain")
+        val p4 = ProductEntity(name = "AeroSound ANC Headphones", price = 4999.0, description = "Active noise cancelling wireless")
+
+        productDao.insertAll(p1, p2, p3, p4)
+        assertEquals(4, productDao.getProductCount())
+
+        // Query products between ₹500 and ₹2000
+        val midRange = productDao.getProductsByPriceRangeSync(500.0, 2000.0)
+        assertEquals(2, midRange.size)
+        assertEquals("A2 Vedic Cow Bilona Ghee", midRange[0].name)
+        assertEquals("Royal Basmati Rice 5kg", midRange[1].name)
+
+        // Query products under ₹1000
+        val under1000 = productDao.getProductsUnderPriceSync(1000.0)
+        assertEquals(2, under1000.size)
+        assertEquals("Organic Turmeric Powder", under1000[0].name)
+        assertEquals("A2 Vedic Cow Bilona Ghee", under1000[1].name)
+
+        // Query products ordered by price in INR ascending
+        val sortedAsc = productDao.getProductsOrderedByPriceAsc().first()
+        assertEquals(150.0, sortedAsc[0].price, 0.001)
+        assertEquals(4999.0, sortedAsc[3].price, 0.001)
+
+        // Query products ordered by price in INR descending
+        val sortedDesc = productDao.getProductsOrderedByPriceDesc().first()
+        assertEquals(4999.0, sortedDesc[0].price, 0.001)
+        assertEquals(150.0, sortedDesc[3].price, 0.001)
+    }
+
+    @Test
+    fun searchProductsByNameAndDescription() = runBlocking {
+        productDao.deleteAll()
+
+        val p1 = ProductEntity(name = "Zenith AI Laptop", price = 68999.0, description = "Ultra slim Intel Core Ultra 7 with OLED display")
+        val p2 = ProductEntity(name = "Phantom 5G Smartphone", price = 42999.0, description = "Snapdragon 8 Gen 3 with 50MP Sony camera")
+        val p3 = ProductEntity(name = "Laptop Protective Sleeve", price = 999.0, description = "Water-resistant padded neoprene sleeve for 16-inch laptops")
+
+        productDao.insertProducts(listOf(p1, p2, p3))
+
+        // Search by name query "Laptop"
+        val laptopNameMatches = productDao.searchProductsByNameSync("Laptop")
+        assertEquals(2, laptopNameMatches.size)
+
+        // Full search matching keyword in description: "Sony"
+        val sonySearch = productDao.searchProductsSync("Sony")
+        assertEquals(1, sonySearch.size)
+        assertEquals("Phantom 5G Smartphone", sonySearch[0].name)
+
+        // Full search matching keyword in description: "OLED"
+        val oledSearch = productDao.searchProductsSync("OLED")
+        assertEquals(1, oledSearch.size)
+        assertEquals("Zenith AI Laptop", oledSearch[0].name)
+    }
+
+    @Test
+    fun updateProductPriceInInrAndDescription() = runBlocking {
+        productDao.deleteAll()
+
+        val product = ProductEntity(id = "p_update", name = "Smart Fitness Band", price = 1999.0, description = "Heart rate and sleep tracker")
+        productDao.insertProduct(product)
+
+        // Update price in INR
+        productDao.updatePrice("p_update", 1499.0)
+        val updatedPrice = productDao.getProductByIdSync("p_update")
+        assertEquals(1499.0, updatedPrice?.priceInInr ?: 0.0, 0.001)
+        assertEquals(1499.0, updatedPrice?.price ?: 0.0, 0.001)
+
+        // Update description
+        productDao.updateDescription("p_update", "Updated with SPO2 blood oxygen tracking")
+        val updatedDesc = productDao.getProductByIdSync("p_update")
+        assertEquals("Updated with SPO2 blood oxygen tracking", updatedDesc?.description)
+
+        // Update entire entity
+        productDao.update(updatedDesc!!.copy(name = "Smart Fitness Band Pro", price = 1799.0))
+        val reloaded = productDao.getProductByIdSync("p_update")
+        assertEquals("Smart Fitness Band Pro", reloaded?.name)
+        assertEquals(1799.0, reloaded?.priceInInr ?: 0.0, 0.001)
+
+        // Delete
+        productDao.delete(reloaded!!)
+        assertNull(productDao.getProductByIdSync("p_update"))
+        assertEquals(0, productDao.getProductCount())
+    }
+
+    @Test
+    fun retrieveProductsForGridWithFormattedNamesAndInrPrices() = runBlocking {
+        productDao.deleteAll()
+
+        val products = listOf(
+            ProductEntity(id = "grid_1", name = "Banarasi Silk Saree", price = 3499.0, description = "Traditional pure silk"),
+            ProductEntity(id = "grid_2", name = "A2 Cow Bilona Ghee", price = 1499.0, description = "Vedic organic ghee"),
+            ProductEntity(id = "grid_3", name = "Zenith AI Ultrabook", price = 68999.0, description = "Intel Core Ultra 7"),
+            ProductEntity(id = "grid_4", name = "Phantom 5G Smartphone", price = 42999.0, description = "Snapdragon 8 Gen 3")
+        )
+
+        productDao.insertProducts(products)
+
+        val retrieved = productDao.getAllProducts().first()
+        assertEquals(4, retrieved.size)
+
+        // Verify product names
+        assertEquals("Banarasi Silk Saree", retrieved[0].name)
+        assertEquals("A2 Cow Bilona Ghee", retrieved[1].name)
+        assertEquals("Zenith AI Ultrabook", retrieved[2].name)
+        assertEquals("Phantom 5G Smartphone", retrieved[3].name)
+
+        // Verify INR prices formatted with Rupee symbol
+        assertEquals("₹3,499", com.example.util.CurrencyUtil.formatRupees(retrieved[0].price))
+        assertEquals("₹1,499", com.example.util.CurrencyUtil.formatRupees(retrieved[1].price))
+        assertEquals("₹68,999", com.example.util.CurrencyUtil.formatRupees(retrieved[2].price))
+        assertEquals("₹42,999", com.example.util.CurrencyUtil.formatRupees(retrieved[3].price))
+
+        // Verify entity's formattedPriceInInr helper
+        assertEquals("₹3,499", retrieved[0].formattedPriceInInr)
+        assertEquals("₹1,499", retrieved[1].formattedPriceInInr)
+    }
 }
+

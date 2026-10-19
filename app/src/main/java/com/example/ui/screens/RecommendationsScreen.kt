@@ -422,14 +422,14 @@ fun RecommendationsScreen(
                     ) {
                         Column {
                             Text(
-                                text = "$${String.format("%.2f", product.price)}",
+                                text = CurrencyUtil.formatRupees(product.price),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             if (product.originalPrice != null) {
                                 Text(
-                                    text = "Was $${String.format("%.2f", product.originalPrice)}",
+                                    text = "Was ${CurrencyUtil.formatRupees(product.originalPrice)}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

@@ -56,11 +56,23 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.example.R
 import com.example.data.model.Order
 import com.example.data.model.OrderStatus
 import com.example.data.model.Product
 import com.example.ui.components.ProductCard
+import com.example.ui.components.ProductFilterBottomSheet
+import com.example.ui.viewmodel.PriceFilterRange
+import com.example.ui.viewmodel.ProductSortOrder
 
 @Composable
 fun ShopHomeScreen(
@@ -80,8 +92,18 @@ fun ShopHomeScreen(
     onOpenLinkTester: () -> Unit = {},
     isGuest: Boolean = false,
     onRequireSignIn: (String) -> Unit = {},
+    sortOrder: ProductSortOrder = ProductSortOrder.RELEVANCE,
+    priceRange: PriceFilterRange = PriceFilterRange.ALL,
+    minRating: Float = 0f,
+    onlyFastDelivery: Boolean = false,
+    activeFilterCount: Int = 0,
+    onApplyFilters: (ProductSortOrder, PriceFilterRange, Float, Boolean, String) -> Unit = { _, _, _, _, _ -> },
+    onResetFilters: () -> Unit = {},
+    onOpen3DView: ((Product) -> Unit)? = null,
+    onShareProduct: ((Product) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    var showFilterSheet by remember { mutableStateOf(false) }
     val categories = listOf("All", "Fashion", "Groceries", "Tech", "Living", "Fitness")
 
     LazyVerticalGrid(
@@ -216,39 +238,233 @@ fun ShopHomeScreen(
             }
         }
 
-        // 2. Search Field
+        // 2. Real-Time Search Bar & Filter Controls
         item(span = { GridItemSpan(2) }) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = onSearchChange,
-                placeholder = { Text("Search products, tech, fashion...") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { onSearchChange("") }) {
-                            Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                ),
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .testTag("search_input")
-            )
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Search Input & Filter Button Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = onSearchChange,
+                        placeholder = { Text("Search products, tech, fashion...") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { onSearchChange("") }) {
+                                    Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear search")
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("search_input")
+                    )
+
+                    // Filter Action Button with Active Badge
+                    Box {
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (activeFilterCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier
+                                .size(54.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable { showFilterSheet = true }
+                                .testTag("btn_open_filters"),
+                            tonalElevation = 2.dp
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Tune,
+                                    contentDescription = "Filter & Sort",
+                                    tint = if (activeFilterCount > 0) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        if (activeFilterCount > 0) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(2.dp)
+                                    .size(20.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF43F5E)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "$activeFilterCount",
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Quick Search Suggestion Chips
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(
+                        "🎧 Headphones",
+                        "⌚ Smart Watch",
+                        "👟 Sneakers",
+                        "🥻 Saree",
+                        "⚡ Under ₹1,500",
+                        "⭐ 4.5+ Rating"
+                    ).forEach { tag ->
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier.clickable {
+                                when {
+                                    tag.contains("Under ₹1,500") -> onApplyFilters(sortOrder, PriceFilterRange.UNDER_1500, minRating, onlyFastDelivery, selectedCategory)
+                                    tag.contains("4.5+ Rating") -> onApplyFilters(sortOrder, priceRange, 4.5f, onlyFastDelivery, selectedCategory)
+                                    else -> onSearchChange(tag.substringAfter(" ").trim())
+                                }
+                            }
+                        ) {
+                            Text(
+                                text = tag,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
+                }
+
+                // Active Filters Row (Removable pills)
+                if (activeFilterCount > 0 || searchQuery.isNotBlank()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Active:",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        if (searchQuery.isNotBlank()) {
+                            ActiveFilterPill(
+                                label = "\"$searchQuery\"",
+                                onRemove = { onSearchChange("") }
+                            )
+                        }
+
+                        if (selectedCategory != "All") {
+                            ActiveFilterPill(
+                                label = selectedCategory,
+                                onRemove = { onCategorySelect("All") }
+                            )
+                        }
+
+                        if (priceRange != PriceFilterRange.ALL) {
+                            ActiveFilterPill(
+                                label = priceRange.label,
+                                onRemove = {
+                                    onApplyFilters(
+                                        sortOrder,
+                                        PriceFilterRange.ALL,
+                                        minRating,
+                                        onlyFastDelivery,
+                                        selectedCategory
+                                    )
+                                }
+                            )
+                        }
+
+                        if (minRating > 0f) {
+                            ActiveFilterPill(
+                                label = "${minRating}+ ★",
+                                onRemove = {
+                                    onApplyFilters(
+                                        sortOrder,
+                                        priceRange,
+                                        0f,
+                                        onlyFastDelivery,
+                                        selectedCategory
+                                    )
+                                }
+                            )
+                        }
+
+                        if (sortOrder != ProductSortOrder.RELEVANCE) {
+                            ActiveFilterPill(
+                                label = sortOrder.label,
+                                onRemove = {
+                                    onApplyFilters(
+                                        ProductSortOrder.RELEVANCE,
+                                        priceRange,
+                                        minRating,
+                                        onlyFastDelivery,
+                                        selectedCategory
+                                    )
+                                }
+                            )
+                        }
+
+                        if (onlyFastDelivery) {
+                            ActiveFilterPill(
+                                label = "Express Only",
+                                onRemove = {
+                                    onApplyFilters(
+                                        sortOrder,
+                                        priceRange,
+                                        minRating,
+                                        false,
+                                        selectedCategory
+                                    )
+                                }
+                            )
+                        }
+
+                        Text(
+                            text = "Reset All",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .clickable { onResetFilters() }
+                                .padding(horizontal = 4.dp)
+                                .testTag("clear_all_filters")
+                        )
+                    }
+                }
+            }
         }
 
         // 3. Deep Link Quick Access & Tester Banner
@@ -508,6 +724,20 @@ fun ShopHomeScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = onResetFilters,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.testTag("btn_reset_empty_search")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.RestartAlt,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Clear Filters & Search")
+                        }
                     }
                 }
             }
@@ -521,10 +751,58 @@ fun ShopHomeScreen(
                         onWishlistToggle = { onWishlistToggle(product.id) },
                         onAddToCart = { onAddToCart(product) },
                         showRecommendationBadge = false,
+                        onOpen3DView = { onOpen3DView?.invoke(product) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
+        }
+    }
+
+    if (showFilterSheet) {
+        ProductFilterBottomSheet(
+            currentSortOrder = sortOrder,
+            currentPriceRange = priceRange,
+            currentMinRating = minRating,
+            currentFastDelivery = onlyFastDelivery,
+            currentCategory = selectedCategory,
+            onApplyFilters = { sort, price, rating, fastDelivery, category ->
+                onApplyFilters(sort, price, rating, fastDelivery, category)
+            },
+            onResetFilters = onResetFilters,
+            onDismissRequest = { showFilterSheet = false },
+            totalMatchingCount = products.size
+        )
+    }
+}
+
+@Composable
+private fun ActiveFilterPill(
+    label: String,
+    onRemove: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        modifier = Modifier.clickable(onClick = onRemove)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Remove filter",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(12.dp)
+            )
         }
     }
 }

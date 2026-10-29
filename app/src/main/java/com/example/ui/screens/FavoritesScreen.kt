@@ -435,13 +435,15 @@ private fun FavoriteItemCard(
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 15.sp
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = CurrencyUtil.formatInr(product.originalPrice),
-                        textDecoration = TextDecoration.LineThrough,
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (product.originalPrice != null) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = CurrencyUtil.formatInr(product.originalPrice),
+                            textDecoration = TextDecoration.LineThrough,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))

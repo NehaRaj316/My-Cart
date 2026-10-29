@@ -85,9 +85,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.OrderStatus
+import androidx.compose.material.icons.filled.ReceiptLong
 import com.example.ui.components.AppDeepLinkDialog
+import com.example.ui.components.Product3DViewerDialog
 import com.example.ui.components.ProductDetailSheet
+import com.example.ui.components.ProductShareDialog
 import com.example.ui.screens.CartScreen
+import com.example.ui.screens.FavoritesScreen
+import com.example.ui.screens.OrderHistoryScreen
 import com.example.ui.screens.OrderTrackingScreen
 import com.example.ui.screens.RecommendationsScreen
 import com.example.ui.screens.ShopHomeScreen
@@ -120,6 +125,11 @@ class MainActivity : ComponentActivity() {
                 val pastOrders by viewModel.pastOrders.collectAsState()
                 val searchQuery by viewModel.searchQuery.collectAsState()
                 val selectedCategory by viewModel.selectedCategory.collectAsState()
+                val sortOrder by viewModel.sortOrder.collectAsState()
+                val priceRange by viewModel.priceRange.collectAsState()
+                val minRating by viewModel.minRating.collectAsState()
+                val onlyFastDelivery by viewModel.onlyFastDelivery.collectAsState()
+                val activeFilterCount by viewModel.activeFilterCount.collectAsState()
                 val selectedProductDetail by viewModel.selectedProductDetail.collectAsState()
                 val promoCode by viewModel.promoCode.collectAsState()
                 val isPromoApplied by viewModel.promoApplied.collectAsState()
@@ -127,6 +137,8 @@ class MainActivity : ComponentActivity() {
                 val snackbarEvent by viewModel.snackbarEvent.collectAsState()
 
                 var showDeepLinkDialog by remember { mutableStateOf(false) }
+                var active3DProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
+                var activeShareProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
                 val snackbarHostState = remember { SnackbarHostState() }
                 val coroutineScope = rememberCoroutineScope()
                 val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -264,12 +276,13 @@ class MainActivity : ComponentActivity() {
                                             }
                                         }
                                     } else {
-                                        // Wishlist indicator button
+                                        // Wishlist indicator button (Click to open Favorites)
                                         Surface(
                                             shape = RoundedCornerShape(12.dp),
                                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                                             modifier = Modifier
                                                 .padding(end = 4.dp)
+                                                .clickable { viewModel.selectTab(AppNavTab.FAVORITES) }
                                                 .testTag("top_bar_wishlist")
                                         ) {
                                             Row(
@@ -289,6 +302,18 @@ class MainActivity : ComponentActivity() {
                                                     fontWeight = FontWeight.Bold
                                                 )
                                             }
+                                        }
+
+                                        // Order History button
+                                        IconButton(
+                                            onClick = { viewModel.selectTab(AppNavTab.ORDERS) },
+                                            modifier = Modifier.testTag("top_bar_orders_button")
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.ReceiptLong,
+                                                contentDescription = "Order History",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
                                         }
 
                                         // Logout / Sign Out Button
@@ -476,7 +501,18 @@ class MainActivity : ComponentActivity() {
                                     onRequireSignIn = { reason ->
                                         signInPromptReason = reason
                                         showSignInPrompt = true
-                                    }
+                                    },
+                                    sortOrder = sortOrder,
+                                    priceRange = priceRange,
+                                    minRating = minRating,
+                                    onlyFastDelivery = onlyFastDelivery,
+                                    activeFilterCount = activeFilterCount,
+                                    onApplyFilters = { sort, price, rating, fastDelivery, category ->
+                                        viewModel.applyFilters(sort, price, rating, fastDelivery, category)
+                                    },
+                                    onResetFilters = viewModel::resetFilters,
+                                    onOpen3DView = { product -> active3DProduct = product },
+                                    onShareProduct = { product -> activeShareProduct = product }
                                 )
                             }
                             AppNavTab.RECOMMENDATIONS -> {
@@ -641,6 +677,46 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             }
+                            AppNavTab.FAVORITES -> {
+                                FavoritesScreen(
+                                    allProducts = viewModel.products.collectAsState().value,
+                                    wishlistIds = wishlistIds,
+                                    onWishlistToggle = { id ->
+                                        if (currentUser == null) {
+                                            signInPromptReason = "Sign in with your Google account to save favorites."
+                                            showSignInPrompt = true
+                                        } else {
+                                            viewModel.toggleWishlist(id)
+                                        }
+                                    },
+                                    onAddToCart = { product ->
+                                        if (currentUser == null) {
+                                            signInPromptReason = "Sign in with your Google account to add items to cart."
+                                            showSignInPrompt = true
+                                        } else {
+                                            viewModel.addToCart(product)
+                                        }
+                                    },
+                                    onProductClick = viewModel::openProductDetail,
+                                    onOpen3DView = { product -> active3DProduct = product },
+                                    onShareProduct = { product -> activeShareProduct = product },
+                                    onNavigateBack = { viewModel.selectTab(AppNavTab.SHOP) },
+                                    onBrowseCatalog = { viewModel.selectTab(AppNavTab.SHOP) }
+                                )
+                            }
+                            AppNavTab.ORDERS -> {
+                                OrderHistoryScreen(
+                                    onNavigateBack = { viewModel.selectTab(AppNavTab.SHOP) },
+                                    onTrackOrder = { orderId ->
+                                        viewModel.selectTab(AppNavTab.TRACKING)
+                                    },
+                                    onStartShopping = { viewModel.selectTab(AppNavTab.SHOP) },
+                                    onRequireSignIn = { reason ->
+                                        signInPromptReason = reason
+                                        showSignInPrompt = true
+                                    }
+                                )
+                            }
                         }
 
                         // Product Detail Modal Sheet
@@ -674,7 +750,10 @@ class MainActivity : ComponentActivity() {
                                         viewModel.addToCart(product, selectedColor)
                                         viewModel.selectTab(AppNavTab.CART)
                                     }
-                                }
+                                },
+                                onOpen3DView = { active3DProduct = product },
+                                onShareProduct = { activeShareProduct = product },
+                                onShowMessage = { msg -> viewModel.showSnackbar(msg) }
                             )
                         }
 
@@ -685,6 +764,34 @@ class MainActivity : ComponentActivity() {
                                 onTestLink = { url ->
                                     handleDeepLink(Uri.parse(url))
                                 },
+                                onShowMessage = { msg ->
+                                    viewModel.showSnackbar(msg)
+                                }
+                            )
+                        }
+
+                        // 3D Product Inspection Dialog
+                        active3DProduct?.let { product ->
+                            Product3DViewerDialog(
+                                product = product,
+                                onDismissRequest = { active3DProduct = null },
+                                onAddToCart = { colorHex ->
+                                    if (currentUser == null) {
+                                        signInPromptReason = "Sign in with your Google account to add items to cart."
+                                        showSignInPrompt = true
+                                    } else {
+                                        viewModel.addToCart(product, colorHex)
+                                    }
+                                    active3DProduct = null
+                                }
+                            )
+                        }
+
+                        // Social Share Dialog
+                        activeShareProduct?.let { product ->
+                            ProductShareDialog(
+                                product = product,
+                                onDismissRequest = { activeShareProduct = null },
                                 onShowMessage = { msg ->
                                     viewModel.showSnackbar(msg)
                                 }

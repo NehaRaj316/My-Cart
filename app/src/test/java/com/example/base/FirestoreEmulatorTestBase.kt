@@ -13,6 +13,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import org.junit.Assume
+import java.net.Socket
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -29,8 +31,17 @@ abstract class FirestoreEmulatorTestBase {
     protected lateinit var auth: FirebaseAuth
     protected lateinit var databaseId: String
 
+    protected fun isEmulatorRunning(): Boolean {
+        return try {
+            Socket(EMULATOR_HOST, FIRESTORE_PORT).use { true }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     @Before
     open fun setUpFirebase() {
+        Assume.assumeTrue("Firebase emulator must be running", isEmulatorRunning())
         val context = ApplicationProvider.getApplicationContext<Context>()
         val resId = context.resources.getIdentifier("firestore_database_id", "string", context.packageName)
         databaseId = if (resId != 0) context.getString(resId) else "demo-database"
@@ -63,7 +74,9 @@ abstract class FirestoreEmulatorTestBase {
 
     @After
     open fun tearDownFirebase() {
-        auth.signOut()
+        if (::auth.isInitialized) {
+            auth.signOut()
+        }
     }
 
     protected suspend fun signInTestUser(email: String): String = withContext(Dispatchers.IO) {

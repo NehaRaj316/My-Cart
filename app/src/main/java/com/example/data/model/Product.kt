@@ -26,4 +26,10 @@ data class Product(
     val priceInInr: Double get() = price
     val currency: String get() = "INR"
     val formattedPriceInInr: String get() = "₹%,.0f".format(price)
+    val discountPercent: Int
+        get() {
+            val orig = originalPrice ?: return 0
+            if (orig <= price) return 0
+            return (((orig - price) / orig) * 100).toInt()
+        }
 }

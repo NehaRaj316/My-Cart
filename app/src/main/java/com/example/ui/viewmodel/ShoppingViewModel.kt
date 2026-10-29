@@ -21,6 +21,22 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+enum class ProductSortOrder(val label: String) {
+    RELEVANCE("Featured"),
+    PRICE_LOW_TO_HIGH("Price: Low to High"),
+    PRICE_HIGH_TO_LOW("Price: High to Low"),
+    RATING("Highest Rated"),
+    DISCOUNT("Biggest Discount %")
+}
+
+enum class PriceFilterRange(val label: String, val min: Double?, val max: Double?) {
+    ALL("All Prices", null, null),
+    UNDER_1500("Under ₹1,500", null, 1500.0),
+    BETWEEN_1500_AND_5000("₹1,500 – ₹5,000", 1500.0, 5000.0),
+    BETWEEN_5000_AND_15000("₹5,000 – ₹15,000", 5000.0, 15000.0),
+    ABOVE_15000("Above ₹15,000", 15000.0, null)
+}
+
 enum class AppNavTab {
     SHOP,
     RECOMMENDATIONS,
@@ -48,6 +64,18 @@ class ShoppingViewModel(
 
     private val _selectedCategory = MutableStateFlow("All")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
+
+    private val _sortOrder = MutableStateFlow(ProductSortOrder.RELEVANCE)
+    val sortOrder: StateFlow<ProductSortOrder> = _sortOrder.asStateFlow()
+
+    private val _priceRange = MutableStateFlow(PriceFilterRange.ALL)
+    val priceRange: StateFlow<PriceFilterRange> = _priceRange.asStateFlow()
+
+    private val _minRating = MutableStateFlow(0f)
+    val minRating: StateFlow<Float> = _minRating.asStateFlow()
+
+    private val _onlyFastDelivery = MutableStateFlow(false)
+    val onlyFastDelivery: StateFlow<Boolean> = _onlyFastDelivery.asStateFlow()
 
     val products: StateFlow<List<Product>> = repository.products
     val wishlistIds: StateFlow<Set<String>> = repository.wishlistIds
@@ -77,21 +105,81 @@ class ShoppingViewModel(
         startSimulationTicker()
     }
 
-    // Filtered products for Explore/Shop screen
+    // Active filter count for badge display
+    val activeFilterCount: StateFlow<Int> = combine(
+        _selectedCategory,
+        _priceRange,
+        _minRating,
+        _sortOrder,
+        _onlyFastDelivery
+    ) { category, price, rating, sort, fastDelivery ->
+        var count = 0
+        if (category != "All") count++
+        if (price != PriceFilterRange.ALL) count++
+        if (rating > 0f) count++
+        if (sort != ProductSortOrder.RELEVANCE) count++
+        if (fastDelivery) count++
+        count
+    }.stateIn(viewModelScope, SharingStarted.Lazily, 0)
+
+    private data class ProductFilterCriteria(
+        val query: String = "",
+        val category: String = "All",
+        val priceRange: PriceFilterRange = PriceFilterRange.ALL,
+        val minRating: Float = 0f,
+        val onlyFastDelivery: Boolean = false,
+        val sortOrder: ProductSortOrder = ProductSortOrder.RELEVANCE
+    )
+
+    private val filterCriteria: kotlinx.coroutines.flow.Flow<ProductFilterCriteria> = combine(
+        _searchQuery,
+        _selectedCategory,
+        _priceRange,
+        _minRating
+    ) { query, category, price, rating ->
+        ProductFilterCriteria(query = query, category = category, priceRange = price, minRating = rating)
+    }.combine(_onlyFastDelivery) { criteria, fastDelivery ->
+        criteria.copy(onlyFastDelivery = fastDelivery)
+    }.combine(_sortOrder) { criteria, sort ->
+        criteria.copy(sortOrder = sort)
+    }
+
+    // Real-time filtered products for Explore/Shop screen
     val filteredProducts: StateFlow<List<Product>> = combine(
         products,
-        _searchQuery,
-        _selectedCategory
-    ) { allProducts, query, category ->
-        allProducts.filter { product ->
-            val matchesQuery = query.isBlank() ||
-                product.title.contains(query, ignoreCase = true) ||
-                product.subtitle.contains(query, ignoreCase = true) ||
-                product.description.contains(query, ignoreCase = true)
+        filterCriteria
+    ) { allProducts, criteria ->
+        val cleanQuery = criteria.query.trim()
+        val filtered = allProducts.filter { product ->
+            val matchesQuery = cleanQuery.isBlank() ||
+                product.title.contains(cleanQuery, ignoreCase = true) ||
+                product.subtitle.contains(cleanQuery, ignoreCase = true) ||
+                product.description.contains(cleanQuery, ignoreCase = true) ||
+                product.category.contains(cleanQuery, ignoreCase = true) ||
+                product.badge?.contains(cleanQuery, ignoreCase = true) == true
 
-            val matchesCategory = category == "All" || product.category.equals(category, ignoreCase = true)
+            val matchesCategory = criteria.category == "All" || product.category.equals(criteria.category, ignoreCase = true)
 
-            matchesQuery && matchesCategory
+            val matchesPrice = when {
+                criteria.priceRange.min != null && criteria.priceRange.max != null -> product.price in criteria.priceRange.min..criteria.priceRange.max
+                criteria.priceRange.min != null -> product.price >= criteria.priceRange.min
+                criteria.priceRange.max != null -> product.price <= criteria.priceRange.max
+                else -> true
+            }
+
+            val matchesRating = criteria.minRating == 0f || product.rating >= criteria.minRating
+
+            val matchesFastDelivery = !criteria.onlyFastDelivery || product.inStock
+
+            matchesQuery && matchesCategory && matchesPrice && matchesRating && matchesFastDelivery
+        }
+
+        when (criteria.sortOrder) {
+            ProductSortOrder.RELEVANCE -> filtered
+            ProductSortOrder.PRICE_LOW_TO_HIGH -> filtered.sortedBy { it.price }
+            ProductSortOrder.PRICE_HIGH_TO_LOW -> filtered.sortedByDescending { it.price }
+            ProductSortOrder.RATING -> filtered.sortedByDescending { it.rating }
+            ProductSortOrder.DISCOUNT -> filtered.sortedByDescending { it.discountPercent }
         }
     }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -119,6 +207,45 @@ class ShoppingViewModel(
 
     fun onSelectCategory(category: String) {
         _selectedCategory.value = category
+    }
+
+    fun setSortOrder(order: ProductSortOrder) {
+        _sortOrder.value = order
+    }
+
+    fun setPriceRange(range: PriceFilterRange) {
+        _priceRange.value = range
+    }
+
+    fun setMinRating(rating: Float) {
+        _minRating.value = rating
+    }
+
+    fun setOnlyFastDelivery(enabled: Boolean) {
+        _onlyFastDelivery.value = enabled
+    }
+
+    fun applyFilters(
+        sort: ProductSortOrder,
+        price: PriceFilterRange,
+        rating: Float,
+        fastDelivery: Boolean,
+        category: String
+    ) {
+        _sortOrder.value = sort
+        _priceRange.value = price
+        _minRating.value = rating
+        _onlyFastDelivery.value = fastDelivery
+        _selectedCategory.value = category
+    }
+
+    fun resetFilters() {
+        _searchQuery.value = ""
+        _selectedCategory.value = "All"
+        _priceRange.value = PriceFilterRange.ALL
+        _minRating.value = 0f
+        _sortOrder.value = ProductSortOrder.RELEVANCE
+        _onlyFastDelivery.value = false
     }
 
     fun openProductDetail(product: Product) {
@@ -212,7 +339,7 @@ class ShoppingViewModel(
                     val totalQty = newOrder.items.sumOf { it.quantity }.coerceAtLeast(1)
                     firestoreOrderRepo.createOrder(
                         orderId = newOrder.id,
-                        totalAmount = newOrder.finalAmount,
+                        totalAmount = newOrder.totalAmount,
                         status = "CONFIRMED",
                         deliveryAddress = address,
                         itemsCount = totalQty

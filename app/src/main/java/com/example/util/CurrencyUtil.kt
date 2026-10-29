@@ -10,6 +10,8 @@ object CurrencyUtil {
         return "₹" + format.format(rounded)
     }
 
+    fun formatInr(amount: Double): String = formatRupees(amount)
+
     fun formatRupeesWithDecimal(amount: Double): String {
         val format = NumberFormat.getNumberInstance(Locale("en", "IN")).apply {
             minimumFractionDigits = 0

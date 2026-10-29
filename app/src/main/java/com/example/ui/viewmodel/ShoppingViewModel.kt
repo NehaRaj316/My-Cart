@@ -25,7 +25,9 @@ enum class AppNavTab {
     SHOP,
     RECOMMENDATIONS,
     TRACKING,
-    CART
+    CART,
+    FAVORITES,
+    ORDERS
 }
 
 class ShoppingViewModel(
@@ -200,6 +202,26 @@ class ShoppingViewModel(
             address = address,
             discountApplied = discount
         )
+
+        // Persist order to Firestore for authenticated users
+        viewModelScope.launch {
+            try {
+                val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+                if (auth.currentUser != null) {
+                    val firestoreOrderRepo = com.example.data.repository.FirestoreOrderRepository(getApplication())
+                    val totalQty = newOrder.items.sumOf { it.quantity }.coerceAtLeast(1)
+                    firestoreOrderRepo.createOrder(
+                        orderId = newOrder.id,
+                        totalAmount = newOrder.finalAmount,
+                        status = "CONFIRMED",
+                        deliveryAddress = address,
+                        itemsCount = totalQty
+                    )
+                }
+            } catch (e: Exception) {
+                // Graceful fallback
+            }
+        }
 
         _snackbarEvent.value = "Order #${newOrder.id} placed! Tracking live now."
         _currentTab.value = AppNavTab.TRACKING

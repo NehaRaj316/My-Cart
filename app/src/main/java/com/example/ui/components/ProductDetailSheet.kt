@@ -24,8 +24,10 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -67,9 +69,14 @@ fun ProductDetailSheet(
     onDismiss: () -> Unit,
     onWishlistToggle: () -> Unit,
     onAddToCart: (selectedColor: Long) -> Unit,
-    onBuyNow: (selectedColor: Long) -> Unit
+    onBuyNow: (selectedColor: Long) -> Unit,
+    onOpen3DView: (() -> Unit)? = null,
+    onShareProduct: (() -> Unit)? = null,
+    onShowMessage: ((String) -> Unit)? = null
 ) {
     var selectedColor by remember(product) { mutableStateOf(product.primaryColorHex) }
+    var show3DViewer by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -83,11 +90,15 @@ fun ProductDetailSheet(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 32.dp)
         ) {
-            // Top Header Image & Close bar
+            // Top Header Image & Close bar (Clicking image opens 3D view)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(260.dp)
+                    .clickable {
+                        if (onOpen3DView != null) onOpen3DView() else show3DViewer = true
+                    }
+                    .testTag("detail_image_container")
                     .then(
                         if (product.imageRes != null) Modifier.background(Color.Transparent)
                         else Modifier.background(
@@ -149,6 +160,38 @@ fun ProductDetailSheet(
                     }
                 }
 
+                // Floating 3D (360°) Pill over image
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color.Black.copy(alpha = 0.75f),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 12.dp)
+                        .clickable {
+                            if (onOpen3DView != null) onOpen3DView() else show3DViewer = true
+                        }
+                        .testTag("btn_view_in_3d")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ViewInAr,
+                            contentDescription = null,
+                            tint = Color(0xFF38BDF8),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "View in 3D (360°)",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
                 // Top Action Buttons
                 Row(
                     modifier = Modifier
@@ -171,18 +214,61 @@ fun ProductDetailSheet(
                         )
                     }
 
-                    IconButton(
-                        onClick = onWishlistToggle,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.9f))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = if (isWishlisted) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = "Toggle wishlist",
-                            tint = if (isWishlisted) Color(0xFFF43F5E) else Color(0xFF0F172A)
-                        )
+                        // 3D View Button
+                        IconButton(
+                            onClick = {
+                                if (onOpen3DView != null) onOpen3DView() else show3DViewer = true
+                            },
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.9f))
+                                .testTag("detail_3d_btn")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ViewInAr,
+                                contentDescription = "View in 3D",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        // Social Share Button
+                        IconButton(
+                            onClick = {
+                                if (onShareProduct != null) onShareProduct() else showShareDialog = true
+                            },
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.9f))
+                                .testTag("detail_share_btn")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Share product",
+                                tint = Color(0xFF0F172A)
+                            )
+                        }
+
+                        // Wishlist Button
+                        IconButton(
+                            onClick = onWishlistToggle,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.9f))
+                                .testTag("detail_wishlist_btn")
+                        ) {
+                            Icon(
+                                imageVector = if (isWishlisted) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                contentDescription = "Toggle wishlist",
+                                tint = if (isWishlisted) Color(0xFFF43F5E) else Color(0xFF0F172A)
+                            )
+                        }
                     }
                 }
             }
@@ -449,4 +535,26 @@ fun ProductDetailSheet(
             }
         }
     }
+
+    if (show3DViewer) {
+        Product3DViewerDialog(
+            product = product,
+            onDismissRequest = { show3DViewer = false },
+            onAddToCart = { colorHex ->
+                onAddToCart(colorHex)
+                show3DViewer = false
+            }
+        )
+    }
+
+    if (showShareDialog) {
+        ProductShareDialog(
+            product = product,
+            onDismissRequest = { showShareDialog = false },
+            onShowMessage = { msg ->
+                onShowMessage?.invoke(msg)
+            }
+        )
+    }
 }
+

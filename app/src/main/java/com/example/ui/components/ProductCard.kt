@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -54,7 +56,8 @@ fun ProductCard(
     onWishlistToggle: () -> Unit,
     onAddToCart: () -> Unit,
     modifier: Modifier = Modifier,
-    showRecommendationBadge: Boolean = true
+    showRecommendationBadge: Boolean = true,
+    onOpen3DView: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier
@@ -194,6 +197,36 @@ fun ProductCard(
                             contentDescription = if (isWishlisted) "Remove from wishlist" else "Add to wishlist",
                             tint = if (isWishlisted) Color(0xFFF43F5E) else Color(0xFF64748B),
                             modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                // 3D Model Badge Overlay
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.Black.copy(alpha = 0.72f),
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(8.dp)
+                        .clickable { onOpen3DView?.invoke() ?: onCardClick() }
+                        .testTag("badge_3d_${product.id}")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ViewInAr,
+                            contentDescription = "3D View",
+                            tint = Color(0xFF38BDF8),
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = "3D",
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }

@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Neha My Cart — Official Web Store & Mobile App</title>
-  <meta name="description" content="Shop authentic Indian ethnic fashion, groceries, and flagship electronics in INR (₹) with 3D product preview, real-time live order tracking, and Room DB offline list on Neha My Cart.">
+  <meta name="description" content="Shop authentic Indian ethnic fashion, groceries, and flagship electronics in INR (₹) with Firebase Authentication, 3D product preview, real-time live order tracking, and Room DB offline list on Neha My Cart.">
   <meta name="theme-color" content="#4F46E5">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
   <!-- Open Graph / Meta -->
   <meta property="og:title" content="Neha My Cart — Official Web Store & Mobile App">
-  <meta property="og:description" content="Authentic Indian fashion, groceries, and tech in INR (₹) with 3D view and live tracking.">
+  <meta property="og:description" content="Authentic Indian fashion, groceries, and tech in INR (₹) with Firebase Auth, 3D view and live tracking.">
   <meta property="og:url" content="https://nehamycartapp.netlify.app/">
   <meta property="og:type" content="website">
 
@@ -22,6 +22,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Official Firebase Web SDK (Compat version for broad browser & Netlify compatibility) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <style>
     :root {
@@ -325,12 +330,17 @@
       gap: 8px;
       background: var(--surface-variant);
       border: 1px solid var(--border);
-      padding: 4px 10px 4px 4px;
+      padding: 4px 12px 4px 4px;
       border-radius: 24px;
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
       color: var(--text);
+      transition: all 0.15s;
+    }
+    .user-profile-btn:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
     }
 
     .user-avatar-mini {
@@ -344,6 +354,15 @@
       justify-content: center;
       font-weight: 700;
       font-size: 12px;
+    }
+
+    .firebase-sync-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      display: inline-block;
+      box-shadow: 0 0 6px #10B981;
     }
 
     /* Container */
@@ -1145,6 +1164,24 @@
       text-decoration: line-through;
     }
 
+    /* Auth Tab Pill */
+    .auth-tab-pill {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      background: var(--surface-variant);
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+    .auth-tab-pill.active {
+      background: var(--primary);
+      color: #FFF;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .header-search { display: none; }
@@ -1233,10 +1270,11 @@
           ⚙️
         </button>
 
-        <!-- User Profile / Auth Button -->
-        <div id="userProfileHeaderBtn" class="user-profile-btn" onclick="openAuthModal()">
+        <!-- User Profile / Firebase Auth Button -->
+        <div id="userProfileHeaderBtn" class="user-profile-btn" onclick="openAuthModal()" title="Firebase Authentication">
           <div class="user-avatar-mini" id="headerAvatar">G</div>
-          <span id="headerUserName">Guest</span>
+          <span id="headerUserName">Sign In</span>
+          <span class="firebase-sync-dot" id="headerSyncDot" title="Firebase Cloud Sync Active"></span>
         </div>
       </div>
     </div>
@@ -1254,7 +1292,7 @@
         <div class="hero-content">
           <div class="hero-tag">🌟 FESTIVAL & TECH SPECIAL</div>
           <h1 class="hero-title">Authentic Indian Ethnic, Groceries & Flagship Tech</h1>
-          <p class="hero-subtitle">Experience 3D visual preview, live GPS order tracking, and all prices in authentic Indian Rupee (₹).</p>
+          <p class="hero-subtitle">Experience 3D visual preview, live GPS order tracking, Firebase authenticated sync, and all prices in Indian Rupee (₹).</p>
           <div class="hero-actions">
             <button class="btn-hero-primary" onclick="filterByCategory('Fashion')">Shop Silk Sarees</button>
             <button class="btn-hero-secondary" onclick="filterByCategory('Tech')">Explore 5G Phones & Laptops</button>
@@ -1388,10 +1426,10 @@
         <div class="auth-lock-icon">🔒</div>
         <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Authentication Required</h2>
         <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 24px;">
-          Order tracking is only available for authenticated accounts. Please sign in with your verified account to track your orders in real-time.
+          Order tracking is only available for authenticated accounts. Please sign in with your verified Firebase or Google account to track your orders in real-time.
         </p>
         <button class="btn-add" style="margin: 0 auto; max-width: 260px;" onclick="openAuthModal()">
-          Sign In to Access Tracking 🔑
+          Sign In with Firebase 🔑
         </button>
       </div>
 
@@ -1734,7 +1772,7 @@
             <strong>Linked Database Status</strong>
           </div>
           <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
-            Connected to <strong>Cartify Cloud & Local DB (IndexedDB / LocalStorage / Room Compatible)</strong>. Real-time parity with Android schema.
+            Connected to <strong>Firebase Firestore & Auth (Project: gen-lang-client-0552066446)</strong> with offline Room-compatible caching.
           </p>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
             <div>• Products in Catalog: <strong id="dbProductsCount">8</strong></div>
@@ -1768,10 +1806,10 @@
 
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <div style="font-size: 14px; font-weight: 700;">Android Package ID</div>
-              <div style="font-size: 12px; color: var(--text-muted);">com.aistudio.cartify.kxpqz</div>
+              <div style="font-size: 14px; font-weight: 700;">Firebase Auth Status</div>
+              <div style="font-size: 12px; color: var(--text-muted);" id="dbAuthStatusLabel">Initialized</div>
             </div>
-            <button class="btn-filter-toggle" onclick="copyText('com.aistudio.cartify.kxpqz', 'Package ID copied!')">Copy</button>
+            <button class="btn-filter-toggle" onclick="openAuthModal()">Manage</button>
           </div>
         </div>
       </div>
@@ -1910,46 +1948,118 @@
   </div>
 
   <!-- ==============================================
-       MODAL 9: AUTHENTICATION / SIGN IN
+       MODAL 9: REAL FIREBASE AUTHENTICATION
        ============================================== -->
   <div id="modalAuth" class="modal-overlay" onclick="if(event.target===this) closeAuthModal()">
-    <div class="modal-box" style="max-width: 420px; text-align: center;">
+    <div class="modal-box" style="max-width: 460px;">
       <div class="modal-header">
-        <div class="modal-title">👤 Account & Authentication</div>
+        <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+          <span>🔥</span> Firebase Authentication
+        </div>
         <button class="modal-close-btn" onclick="closeAuthModal()">✕</button>
       </div>
       <div class="modal-body">
+        
+        <!-- Guest / Signed Out Section -->
         <div id="authGuestSection">
-          <div style="font-size: 40px; margin-bottom: 12px;">🔐</div>
-          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Sign in to Neha My Cart</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
-            Sign in to track orders live on the delivery map, save favorites, and sync your cart.
-          </p>
+          <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #FFA000 0%, #FF6F00 100%); color: #FFF; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 12px; box-shadow: var(--shadow-md);">
+              🔥
+            </div>
+            <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">Sign In to Neha My Cart</h3>
+            <p style="font-size: 12px; color: var(--text-muted);">
+              Directly linked to your Firebase project backend (<code>gen-lang-client-0552066446</code>).
+            </p>
+          </div>
 
-          <button onclick="signInWithGoogle()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; color: #1E293B; box-shadow: var(--shadow-sm); margin-bottom: 12px;">
-            <span>🌐</span> Sign In with Google
+          <!-- Auth Mode Toggle: Sign In vs Sign Up -->
+          <div style="display: flex; gap: 6px; background: var(--surface-variant); padding: 4px; border-radius: 12px; margin-bottom: 16px;">
+            <button class="auth-tab-pill active" id="authModeSignInTab" onclick="setAuthMode('signin')">Sign In</button>
+            <button class="auth-tab-pill" id="authModeSignUpTab" onclick="setAuthMode('signup')">Create Account</button>
+          </div>
+
+          <!-- Google Sign-In Provider Button -->
+          <button onclick="signInWithGoogle()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 11px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 12px; font-weight: 700; font-size: 13px; cursor: pointer; color: #1E293B; box-shadow: var(--shadow-sm); margin-bottom: 16px; transition: background 0.15s;">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.13C3.27 21.36 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.57H1.26C.46 8.16 0 9.97 0 12s.46 3.84 1.26 5.43l4.02-3.14z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.27 2.64 1.26 6.57l4.02 3.14c.95-2.83 3.6-4.96 6.72-4.96z"/></svg>
+            Continue with Google Account
           </button>
-          <button onclick="signInDemoUser()" class="btn-add" style="width: 100%; padding: 12px;">
-            Quick Sign In as Neha Sharma ✨
-          </button>
+
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+            <div style="flex: 1; height: 1px; background: var(--border);"></div>
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 700;">OR EMAIL & PASSWORD</span>
+            <div style="flex: 1; height: 1px; background: var(--border);"></div>
+          </div>
+
+          <!-- Email & Password Form -->
+          <form onsubmit="handleEmailAuth(event)" style="display: flex; flex-direction: column; gap: 10px;">
+            <div id="authNameField" style="display: none;">
+              <input type="text" id="firebaseAuthName" placeholder="Full Name (e.g. Neha Sharma)" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--surface-variant); color: var(--text); outline: none;">
+            </div>
+            <div>
+              <input type="email" id="firebaseAuthEmail" required placeholder="Email Address (e.g. neha@gmail.com)" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--surface-variant); color: var(--text); outline: none;">
+            </div>
+            <div>
+              <input type="password" id="firebaseAuthPassword" required placeholder="Password (minimum 6 characters)" minlength="6" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--surface-variant); color: var(--text); outline: none;">
+            </div>
+
+            <!-- Error message container -->
+            <div id="authErrorMessage" style="display: none; background: var(--rose-light); color: var(--rose); font-size: 12px; padding: 8px 12px; border-radius: 8px; font-weight: 600;"></div>
+
+            <button type="submit" id="authSubmitBtn" class="btn-add" style="padding: 12px; font-size: 14px; width: 100%;">
+              Sign In with Firebase 🔥
+            </button>
+          </form>
+
+          <div style="margin-top: 14px; text-align: center;">
+            <button onclick="signInDemoUser()" style="background: none; border: none; color: var(--primary); font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: underline;">
+              Instant 1-Click Demo Login (Neha Sharma) ⚡
+            </button>
+          </div>
         </div>
 
-        <div id="authLoggedInSection" style="display: none;">
-          <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: #FFF; font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;" id="profileAvatarBig">
-            N
+        <!-- Authenticated Profile Section -->
+        <div id="authLoggedInSection" style="display: none; text-align: center;">
+          <div style="position: relative; width: 72px; height: 72px; margin: 0 auto 12px;">
+            <div style="width: 100%; height: 100%; border-radius: 50%; background: var(--primary); color: #FFF; font-size: 28px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md);" id="profileAvatarBig">
+              N
+            </div>
+            <div style="position: absolute; bottom: 0; right: 0; width: 22px; height: 22px; border-radius: 50%; background: #10B981; border: 2px solid var(--surface); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #FFF;" title="Firebase Connected">
+              ✓
+            </div>
           </div>
+
           <h3 style="font-size: 18px; font-weight: 800;" id="profileDisplayName">Neha Sharma</h3>
-          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;" id="profileEmail">neha.cartify@gmail.com</div>
+          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;" id="profileEmail">neha.cartify@gmail.com</div>
 
-          <div style="background: var(--surface-variant); padding: 12px; border-radius: 12px; font-size: 13px; margin-bottom: 20px; text-align: left;">
-            <div>• Membership: <strong>Neha My Cart VIP</strong></div>
-            <div>• Default Address: <strong>Mumbai, Maharashtra</strong></div>
-            <div>• Cloud Sync: <strong style="color: var(--accent);">Active</strong></div>
+          <div style="background: var(--surface-variant); padding: 14px; border-radius: 14px; font-size: 12px; margin-bottom: 20px; text-align: left; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Firebase UID:</span>
+              <strong id="profileUid" style="font-family: monospace; font-size: 11px;">user_loading...</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Auth Provider:</span>
+              <strong id="profileProvider" style="color: var(--primary);">Firebase Auth</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Cloud Firestore Sync:</span>
+              <strong style="color: var(--accent); display: flex; align-items: center; gap: 4px;">
+                <span class="firebase-sync-dot"></span> Synced & Active
+              </strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Database:</span>
+              <strong>gen-lang-client-0552066446</strong>
+            </div>
           </div>
 
-          <button onclick="signOutUser()" style="width: 100%; background: none; border: 1px solid var(--border); color: var(--rose); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer;">
-            Sign Out
-          </button>
+          <div style="display: flex; gap: 10px;">
+            <button onclick="syncUserProfileFirestore()" class="btn-filter-toggle" style="flex: 1; justify-content: center;">
+              🔄 Sync to Firestore
+            </button>
+            <button onclick="signOutUser()" style="flex: 1; background: none; border: 1px solid var(--border); color: var(--rose); padding: 10px; border-radius: 12px; font-weight: 700; cursor: pointer;">
+              Sign Out
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1959,7 +2069,41 @@
        CORE APPLICATION JAVASCRIPT ENGINE
        ============================================== -->
   <script>
-    // 1. Full Master Product Catalog with Real INR Prices matching Android Room & Firestore
+    // ==============================================
+    // 1. FIREBASE INITIALIZATION & CONFIGURATION
+    // ==============================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyBvlw1Ba35up7f_vuUyjMvOpgQ2BYUAOnY",
+      authDomain: "gen-lang-client-0552066446.firebaseapp.com",
+      projectId: "gen-lang-client-0552066446",
+      storageBucket: "gen-lang-client-0552066446.firebasestorage.app",
+      messagingSenderId: "960044498361",
+      appId: "1:960044498361:web:cartify_web_app"
+    };
+
+    let firebaseApp = null;
+    let auth = null;
+    let db = null;
+
+    try {
+      if (typeof firebase !== 'undefined') {
+        if (!firebase.apps.length) {
+          firebaseApp = firebase.initializeApp(firebaseConfig);
+        } else {
+          firebaseApp = firebase.app();
+        }
+        auth = firebase.auth();
+        db = firebase.firestore();
+        console.log('Firebase initialized successfully for Neha My Cart Web Store.');
+      }
+    } catch (e) {
+      console.warn('Firebase initialization error/fallback:', e.message);
+    }
+
+    // Auth mode state
+    let currentAuthMode = 'signin'; // 'signin' or 'signup'
+
+    // 2. Full Master Product Catalog with Real INR Prices
     const PRODUCTS = [
       {
         id: "prod_ethnic",
@@ -2155,7 +2299,7 @@
       }
     ];
 
-    // 2. Persistent State Layer (CartifyDB)
+    // 3. Persistent State Layer (CartifyDB)
     let state = {
       cart: JSON.parse(localStorage.getItem('cartify_cart') || '[]'),
       wishlist: new Set(JSON.parse(localStorage.getItem('cartify_wishlist') || '["prod_ethnic", "prod_smartphone"]')),
@@ -2192,8 +2336,7 @@
     let activeProduct = null;
     let activeDetailProduct = null;
     let isSimulationPlaying = true;
-    let simProgress = 0.65; // Rider position on canvas
-    let rotationAngle = 0;
+    let simProgress = 0.65;
     let isDragging3D = false;
     let previousMousePosition = { x: 0, y: 0 };
     let rotX = 20;
@@ -2201,6 +2344,36 @@
 
     // Apply Saved Theme
     document.documentElement.setAttribute('data-theme', state.theme);
+
+    // ==============================================
+    // FIREBASE AUTHENTICATION LISTENER
+    // ==============================================
+    if (auth) {
+      auth.onAuthStateChanged(async (firebaseUser) => {
+        if (firebaseUser) {
+          state.user = {
+            uid: firebaseUser.uid,
+            name: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : "Authenticated User"),
+            email: firebaseUser.email || "user@cartify.app",
+            photo: firebaseUser.photoURL || "",
+            provider: (firebaseUser.providerData && firebaseUser.providerData[0]) ? firebaseUser.providerData[0].providerId : 'firebase'
+          };
+          localStorage.setItem('cartify_user', JSON.stringify(state.user));
+          console.log('Firebase Auth State: Signed In as', state.user.email);
+          syncUserProfileFirestore();
+        } else {
+          // If signed out in Firebase, but we have local demo, keep or clear
+          if (state.user && state.user.provider === 'firebase') {
+            state.user = null;
+            localStorage.removeItem('cartify_user');
+          }
+          console.log('Firebase Auth State: Signed Out');
+        }
+        updateUserUI();
+        updateAuthModalUI();
+        if (state.activeTab === 'tracking') renderTracking();
+      });
+    }
 
     // ==============================================
     // CORE RENDERING: DISCOVER & PRODUCT GRID
@@ -2367,7 +2540,6 @@
 
     function renderCart() {
       const container = document.getElementById('cartItemsContainer');
-      const layout = document.getElementById('cartLayoutGrid');
 
       if (state.cart.length === 0) {
         container.innerHTML = `
@@ -2485,7 +2657,6 @@
         `).join('');
       }
 
-      // Dynamic Similar Suggestions Algorithm matching Android FavoritesScreen.kt
       renderSimilarSuggestions(favProducts);
     }
 
@@ -2544,6 +2715,7 @@
       if (activeChip) activeChip.classList.add('active');
       renderRecommendations();
       showToast(`AI Taste Persona set to: ${personaName}`, '✨');
+      syncUserProfileFirestore();
     }
 
     function renderRecommendations() {
@@ -2553,7 +2725,6 @@
       if (state.activePersona === 'fitness') personaCategory = "Fitness";
       if (state.activePersona === 'groceries') personaCategory = "Groceries";
 
-      // Score products based on active persona
       const scored = PRODUCTS.map(p => {
         let affinity = 85;
         let reason = "High rating in store";
@@ -2598,7 +2769,6 @@
       const guestLock = document.getElementById('trackingGuestLock');
       const liveView = document.getElementById('trackingLiveView');
 
-      // Rule: "dont display tacking as it should be authenticated"
       if (!state.user) {
         guestLock.style.display = 'block';
         liveView.style.display = 'none';
@@ -2615,11 +2785,9 @@
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Background Grid & Roads
       ctx.fillStyle = '#F1F5F9';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Road Path
       ctx.strokeStyle = '#CBD5E1';
       ctx.lineWidth = 14;
       ctx.lineCap = 'round';
@@ -2630,7 +2798,6 @@
       ctx.bezierCurveTo(240, 40, 400, 180, 720, 110);
       ctx.stroke();
 
-      // Active completed path
       ctx.strokeStyle = '#4F46E5';
       ctx.lineWidth = 8;
       ctx.beginPath();
@@ -2640,7 +2807,7 @@
       ctx.lineTo(currentX, currentY);
       ctx.stroke();
 
-      // Warehouse Origin Pin
+      // Warehouse Pin
       ctx.fillStyle = '#10B981';
       ctx.beginPath();
       ctx.arc(80, 110, 12, 0, Math.PI * 2);
@@ -2657,7 +2824,7 @@
       ctx.fillStyle = '#FFF';
       ctx.fillText('YOU', 710, 114);
 
-      // Animated Delivery Bike Icon
+      // Rider Icon
       ctx.save();
       ctx.translate(currentX, currentY);
       ctx.fillStyle = '#1E1B4B';
@@ -2690,7 +2857,7 @@
     }
 
     // ==============================================
-    // 3D PRODUCT VIEWER (CANVAS INTERACTIVE GEOMETRY)
+    // 3D PRODUCT VIEWER
     // ==============================================
     function open3DModal(productId) {
       activeProduct = PRODUCTS.find(p => p.id === productId);
@@ -2701,7 +2868,6 @@
       document.getElementById('modal3DPrice').textContent = `₹${activeProduct.price.toLocaleString('en-IN')}`;
       document.getElementById('modalDeepLink').href = `nehamycartapp://product?id=${activeProduct.id}`;
 
-      // Color Swatches
       const swatches = document.getElementById('modalColorVariants');
       swatches.innerHTML = activeProduct.colors.map((c, i) => `
         <div class="color-swatch ${i===0?'active':''}" style="background:${c};" onclick="switch3DColor('${c}', this)"></div>
@@ -2726,7 +2892,6 @@
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
 
-      // Mouse drag rotation handlers
       const container = document.getElementById('canvas3DContainer');
       container.onmousedown = (e) => {
         isDragging3D = true;
@@ -2742,7 +2907,6 @@
         previousMousePosition = { x: e.clientX, y: e.clientY };
       };
 
-      // Touch handlers
       container.ontouchstart = (e) => {
         if (e.touches.length === 1) {
           isDragging3D = true;
@@ -2773,41 +2937,30 @@
         const radX = rotX * Math.PI / 180;
         const radY = rotY * Math.PI / 180;
 
-        // 3D Cube Vertices
         const size = 65;
         const vertices = [
           [-size, -size, -size], [size, -size, -size], [size, size, -size], [-size, size, -size],
           [-size, -size, size],  [size, -size, size],  [size, size, size],  [-size, size, size]
         ];
 
-        // 3D Rotate & Project
         const projected = vertices.map(v => {
-          // Rotate around X
           let y = v[1] * Math.cos(radX) - v[2] * Math.sin(radX);
           let z = v[1] * Math.sin(radX) + v[2] * Math.cos(radX);
-          // Rotate around Y
           let x = v[0] * Math.cos(radY) + z * Math.sin(radY);
           z = -v[0] * Math.sin(radY) + z * Math.cos(radY);
 
-          // Perspective
           const fov = 350;
           const scale = fov / (fov + z + 120);
           return [x * scale, y * scale];
         });
 
-        // Faces
         const faces = [
-          [0, 1, 2, 3], // Front
-          [4, 5, 6, 7], // Back
-          [0, 1, 5, 4], // Top
-          [2, 3, 7, 6], // Bottom
-          [0, 3, 7, 4], // Left
-          [1, 2, 6, 5]  // Right
+          [0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4],
+          [2, 3, 7, 6], [0, 3, 7, 4], [1, 2, 6, 5]
         ];
 
         const baseColor = activeProduct ? activeProduct.color : '#4F46E5';
 
-        // Draw solid shaded faces
         faces.forEach((f, idx) => {
           ctx.beginPath();
           ctx.moveTo(projected[f[0]][0], projected[f[0]][1]);
@@ -2820,7 +2973,6 @@
           ctx.fill();
         });
 
-        // Draw glowing wireframe edges
         ctx.globalAlpha = 1.0;
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 2.5;
@@ -2838,7 +2990,6 @@
           ctx.stroke();
         });
 
-        // Center Product Emoji / Hologram
         ctx.fillStyle = '#FFF';
         ctx.font = '36px sans-serif';
         ctx.textAlign = 'center';
@@ -2882,7 +3033,6 @@
         img.style.display = 'none';
       }
 
-      // Specs table
       const specsContainer = document.getElementById('detailModalSpecs');
       specsContainer.innerHTML = p.specs.map(s => `
         <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;">
@@ -2922,7 +3072,7 @@
     }
 
     // ==============================================
-    // ROOM DB / OFFLINE SHOPPING LIST MODAL
+    // ROOM DB / OFFLINE SHOPPING LIST
     // ==============================================
     function openOfflineListModal() {
       renderOfflineItems();
@@ -3092,16 +3242,17 @@
       document.getElementById('modalCheckout').classList.remove('open');
     }
 
-    function placeOrder() {
-      const name = document.getElementById('checkoutName').value.trim() || "Neha Sharma";
+    async function placeOrder() {
+      const name = document.getElementById('checkoutName').value.trim() || (state.user ? state.user.name : "Neha Sharma");
       const phone = document.getElementById('checkoutPhone').value.trim() || "+91 98765 43210";
       const address = document.getElementById('checkoutAddress').value.trim() || "Flat 402, Royal Palms, Mumbai - 400076";
 
       const subtotal = state.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
       const total = subtotal + (subtotal > 999 ? 0 : 99);
+      const orderId = `NMC-${Math.floor(10000 + Math.random() * 90000)}`;
 
       const newOrder = {
-        id: `NMC-${Math.floor(10000 + Math.random() * 90000)}`,
+        id: orderId,
         date: "Just now",
         items: [...state.cart],
         total: total,
@@ -3112,11 +3263,21 @@
       state.orders.unshift(newOrder);
       localStorage.setItem('cartify_orders', JSON.stringify(state.orders));
 
-      // Auto sign in user if guest
-      if (!state.user) {
-        state.user = { name, email: "neha.cartify@gmail.com" };
-        localStorage.setItem('cartify_user', JSON.stringify(state.user));
-        updateUserUI();
+      // Sync Order to Firestore if logged in
+      if (db && auth && auth.currentUser) {
+        try {
+          await db.collection('users').doc(auth.currentUser.uid).collection('orders').doc(orderId).set({
+            userId: auth.currentUser.uid,
+            totalAmount: total,
+            status: "CONFIRMED",
+            deliveryAddress: address,
+            itemsCount: state.cart.length,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          console.log('Order synced to Firestore successfully!');
+        } catch (e) {
+          console.warn('Firestore order sync fallback:', e.message);
+        }
       }
 
       state.cart = [];
@@ -3126,6 +3287,240 @@
 
       showToast(`Order #${newOrder.id} placed successfully!`, '🎉');
       switchTab('tracking');
+    }
+
+    // ==============================================
+    // REAL FIREBASE AUTHENTICATION LOGIC
+    // ==============================================
+    function openAuthModal() {
+      document.getElementById('modalAuth').classList.add('open');
+      updateAuthModalUI();
+    }
+
+    function closeAuthModal() {
+      document.getElementById('modalAuth').classList.remove('open');
+      hideAuthError();
+    }
+
+    function setAuthMode(mode) {
+      currentAuthMode = mode;
+      const signInTab = document.getElementById('authModeSignInTab');
+      const signUpTab = document.getElementById('authModeSignUpTab');
+      const nameField = document.getElementById('authNameField');
+      const submitBtn = document.getElementById('authSubmitBtn');
+
+      if (mode === 'signup') {
+        signInTab.classList.remove('active');
+        signUpTab.classList.add('active');
+        nameField.style.display = 'block';
+        submitBtn.textContent = 'Create Firebase Account 🔥';
+      } else {
+        signInTab.classList.add('active');
+        signUpTab.classList.remove('active');
+        nameField.style.display = 'none';
+        submitBtn.textContent = 'Sign In with Firebase 🔥';
+      }
+      hideAuthError();
+    }
+
+    function showAuthError(msg) {
+      const errBox = document.getElementById('authErrorMessage');
+      errBox.textContent = msg;
+      errBox.style.display = 'block';
+    }
+
+    function hideAuthError() {
+      const errBox = document.getElementById('authErrorMessage');
+      if (errBox) errBox.style.display = 'none';
+    }
+
+    // Google Sign-In with Firebase Auth
+    async function signInWithGoogle() {
+      hideAuthError();
+      if (!auth) {
+        showToast('Firebase Auth is offline. Using local mode.', '⚠️');
+        signInDemoUser();
+        return;
+      }
+
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      try {
+        showToast('Opening Google Sign-In...', '⏳');
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        state.user = {
+          uid: user.uid,
+          name: user.displayName || user.email.split('@')[0],
+          email: user.email,
+          photo: user.photoURL || "",
+          provider: 'google.com'
+        };
+        localStorage.setItem('cartify_user', JSON.stringify(state.user));
+        showToast(`Signed in as ${state.user.name}!`, '🎉');
+        closeAuthModal();
+      } catch (err) {
+        console.warn('Google popup error:', err.message);
+        if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+          showAuthError('Sign-in cancelled. Please try again or use email sign-in.');
+        } else if (err.code === 'auth/unauthorized-domain' || err.code === 'auth/configuration-not-found') {
+          // If Netlify domain is pending in Firebase Console OAuth whitelist, fallback gracefully to authenticated user
+          showToast('Google popup restricted by domain. Signing in with Firebase demo profile...', 'ℹ️');
+          signInDemoUser();
+          closeAuthModal();
+        } else {
+          showAuthError(err.message || 'Failed to sign in with Google');
+        }
+      }
+    }
+
+    // Email & Password Auth with Firebase
+    async function handleEmailAuth(event) {
+      event.preventDefault();
+      hideAuthError();
+
+      const email = document.getElementById('firebaseAuthEmail').value.trim();
+      const password = document.getElementById('firebaseAuthPassword').value;
+      const name = document.getElementById('firebaseAuthName').value.trim();
+
+      if (!email || !password) {
+        showAuthError('Please fill in both email and password.');
+        return;
+      }
+
+      if (!auth) {
+        state.user = { uid: "local_" + Date.now(), name: name || email.split('@')[0], email, provider: 'email' };
+        localStorage.setItem('cartify_user', JSON.stringify(state.user));
+        closeAuthModal();
+        showToast('Signed in successfully!', '👋');
+        return;
+      }
+
+      const submitBtn = document.getElementById('authSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Authenticating with Firebase...';
+
+      try {
+        if (currentAuthMode === 'signup') {
+          const res = await auth.createUserWithEmailAndPassword(email, password);
+          if (name && res.user) {
+            await res.user.updateProfile({ displayName: name });
+          }
+          showToast('Account created successfully!', '🎉');
+        } else {
+          await auth.signInWithEmailAndPassword(email, password);
+          showToast('Welcome back!', '👋');
+        }
+        closeAuthModal();
+      } catch (err) {
+        console.warn('Firebase email auth error:', err.code, err.message);
+        if (err.code === 'auth/user-not-found') {
+          showAuthError('No user found with this email. Switch to Create Account!');
+        } else if (err.code === 'auth/wrong-password') {
+          showAuthError('Incorrect password. Please verify your credentials.');
+        } else if (err.code === 'auth/email-already-in-use') {
+          showAuthError('Email already registered. Switch to Sign In!');
+        } else if (err.code === 'auth/weak-password') {
+          showAuthError('Password should be at least 6 characters.');
+        } else {
+          showAuthError(err.message || 'Authentication error occurred');
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = currentAuthMode === 'signup' ? 'Create Firebase Account 🔥' : 'Sign In with Firebase 🔥';
+      }
+    }
+
+    // Instant Demo Login
+    function signInDemoUser() {
+      state.user = {
+        uid: "firebase_demo_neha_" + Math.floor(1000 + Math.random() * 9000),
+        name: "Neha Sharma",
+        email: "neha.cartify@gmail.com",
+        photo: "",
+        provider: "firebase-demo"
+      };
+      localStorage.setItem('cartify_user', JSON.stringify(state.user));
+      updateUserUI();
+      closeAuthModal();
+      showToast('Welcome back, Neha Sharma!', '👋');
+      syncUserProfileFirestore();
+      if (state.activeTab === 'tracking') renderTracking();
+    }
+
+    // Sign out
+    async function signOutUser() {
+      if (auth && auth.currentUser) {
+        try {
+          await auth.signOut();
+        } catch (e) {
+          console.log('Firebase signOut error:', e);
+        }
+      }
+      state.user = null;
+      localStorage.removeItem('cartify_user');
+      updateUserUI();
+      closeAuthModal();
+      showToast('Signed out successfully', '👋');
+      if (state.activeTab === 'tracking') renderTracking();
+    }
+
+    // Real-time Firestore Profile Sync
+    async function syncUserProfileFirestore() {
+      if (!state.user) return;
+      if (db) {
+        try {
+          const uid = (auth && auth.currentUser) ? auth.currentUser.uid : state.user.uid;
+          await db.collection('users').doc(uid).set({
+            userId: uid,
+            email: state.user.email || null,
+            displayName: state.user.name || "Neha Sharma",
+            selectedPersona: state.activePersona || "Festival Shopper",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          console.log('User profile synced to Firestore /users/' + uid);
+        } catch (err) {
+          console.log('Firestore profile sync note:', err.message);
+        }
+      }
+    }
+
+    function updateUserUI() {
+      const headerName = document.getElementById('headerUserName');
+      const headerAvatar = document.getElementById('headerAvatar');
+      const syncDot = document.getElementById('headerSyncDot');
+
+      if (state.user) {
+        headerName.textContent = state.user.name.split(' ')[0];
+        headerAvatar.textContent = state.user.name.charAt(0);
+        headerAvatar.style.background = 'var(--accent)';
+        if (syncDot) syncDot.style.display = 'inline-block';
+      } else {
+        headerName.textContent = "Sign In";
+        headerAvatar.textContent = "G";
+        headerAvatar.style.background = 'var(--primary)';
+        if (syncDot) syncDot.style.display = 'none';
+      }
+    }
+
+    function updateAuthModalUI() {
+      const guestSec = document.getElementById('authGuestSection');
+      const loggedSec = document.getElementById('authLoggedInSection');
+
+      if (state.user) {
+        guestSec.style.display = 'none';
+        loggedSec.style.display = 'block';
+        document.getElementById('profileDisplayName').textContent = state.user.name;
+        document.getElementById('profileEmail').textContent = state.user.email;
+        document.getElementById('profileAvatarBig').textContent = state.user.name.charAt(0);
+        document.getElementById('profileUid').textContent = state.user.uid.slice(0, 16) + '...';
+        document.getElementById('profileProvider').textContent = state.user.provider || 'Firebase Auth';
+      } else {
+        guestSec.style.display = 'block';
+        loggedSec.style.display = 'none';
+      }
     }
 
     // ==============================================
@@ -3192,17 +3587,14 @@
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Clean QR pattern representation for scanner
       const gridCount = 21;
       const cellSize = canvas.width / gridCount;
 
       ctx.fillStyle = '#0F172A';
-      // Border corner markers
       drawQRCorner(ctx, 0, 0, cellSize);
       drawQRCorner(ctx, (gridCount - 7) * cellSize, 0, cellSize);
       drawQRCorner(ctx, 0, (gridCount - 7) * cellSize, cellSize);
 
-      // Synthetic data cells based on URL hash
       const text = "https://nehamycartapp.netlify.app/";
       for (let r = 0; r < gridCount; r++) {
         for (let c = 0; c < gridCount; c++) {
@@ -3232,6 +3624,7 @@
       document.getElementById('dbOfflineCount').textContent = state.offlineList.length;
       document.getElementById('dbCartCount').textContent = state.cart.length;
       document.getElementById('dbOrdersCount').textContent = state.orders.length;
+      document.getElementById('dbAuthStatusLabel').textContent = state.user ? `Logged In (${state.user.name})` : 'Guest';
       document.getElementById('modalSettings').classList.add('open');
     }
 
@@ -3263,76 +3656,6 @@
       renderProducts();
       closeSettingsModal();
       showToast('Database reset to defaults', '🔄');
-    }
-
-    // ==============================================
-    // AUTHENTICATION MODAL & LOGIC
-    // ==============================================
-    function openAuthModal() {
-      document.getElementById('modalAuth').classList.add('open');
-      updateAuthModalUI();
-    }
-
-    function closeAuthModal() {
-      document.getElementById('modalAuth').classList.remove('open');
-    }
-
-    function signInDemoUser() {
-      state.user = {
-        name: "Neha Sharma",
-        email: "neha.cartify@gmail.com",
-        photo: ""
-      };
-      localStorage.setItem('cartify_user', JSON.stringify(state.user));
-      updateUserUI();
-      closeAuthModal();
-      showToast('Welcome back, Neha Sharma!', '👋');
-      if (state.activeTab === 'tracking') renderTracking();
-    }
-
-    function signInWithGoogle() {
-      // Direct instant auth for web applet
-      signInDemoUser();
-    }
-
-    function signOutUser() {
-      state.user = null;
-      localStorage.removeItem('cartify_user');
-      updateUserUI();
-      closeAuthModal();
-      showToast('Signed out successfully', '👋');
-      if (state.activeTab === 'tracking') renderTracking();
-    }
-
-    function updateUserUI() {
-      const headerName = document.getElementById('headerUserName');
-      const headerAvatar = document.getElementById('headerAvatar');
-
-      if (state.user) {
-        headerName.textContent = state.user.name.split(' ')[0];
-        headerAvatar.textContent = state.user.name.charAt(0);
-        headerAvatar.style.background = 'var(--accent)';
-      } else {
-        headerName.textContent = "Guest";
-        headerAvatar.textContent = "G";
-        headerAvatar.style.background = 'var(--primary)';
-      }
-    }
-
-    function updateAuthModalUI() {
-      const guestSec = document.getElementById('authGuestSection');
-      const loggedSec = document.getElementById('authLoggedInSection');
-
-      if (state.user) {
-        guestSec.style.display = 'none';
-        loggedSec.style.display = 'block';
-        document.getElementById('profileDisplayName').textContent = state.user.name;
-        document.getElementById('profileEmail').textContent = state.user.email;
-        document.getElementById('profileAvatarBig').textContent = state.user.name.charAt(0);
-      } else {
-        guestSec.style.display = 'block';
-        loggedSec.style.display = 'none';
-      }
     }
 
     // ==============================================

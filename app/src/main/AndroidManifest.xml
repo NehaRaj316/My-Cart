@@ -34,10 +34,22 @@
 
                 <data android:scheme="http" />
                 <data android:scheme="https" />
+                <data android:host="nehamycartapp.netlify.app" />
                 <data android:host="nehamycartapp.com" />
                 <data android:host="www.nehamycartapp.com" />
                 <data android:host="myapp.com" />
                 <data android:host="www.myapp.com" />
+            </intent-filter>
+
+            <!-- NETLIFY APP LINK INTENT FILTER -->
+            <intent-filter android:label="Open with Neha My Cart" android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:scheme="http" />
+                <data android:host="nehamycartapp.netlify.app" />
             </intent-filter>
 
             <!-- FIREBASE DYNAMIC LINKS & HOSTING INTENT FILTER -->

@@ -85,8 +85,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.OrderStatus
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.ReceiptLong
 import com.example.ui.components.AppDeepLinkDialog
+import com.example.ui.components.NetlifyWebStoreDialog
 import com.example.ui.components.Product3DViewerDialog
 import com.example.ui.components.ProductDetailSheet
 import com.example.ui.components.ProductShareDialog
@@ -137,6 +139,7 @@ class MainActivity : ComponentActivity() {
                 val snackbarEvent by viewModel.snackbarEvent.collectAsState()
 
                 var showDeepLinkDialog by remember { mutableStateOf(false) }
+                var showNetlifyWebStoreDialog by remember { mutableStateOf(false) }
                 var active3DProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
                 var activeShareProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
                 val snackbarHostState = remember { SnackbarHostState() }
@@ -231,6 +234,35 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 actions = {
+                                    // Netlify Live Web Store Button
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = Color(0xFF00C7B7).copy(alpha = 0.15f),
+                                        modifier = Modifier
+                                            .padding(end = 4.dp)
+                                            .clickable { showNetlifyWebStoreDialog = true }
+                                            .testTag("top_bar_netlify_button")
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Language,
+                                                contentDescription = "Open Netlify Web Store",
+                                                tint = Color(0xFF00897B),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Text(
+                                                text = "Web 🌐",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF00796B)
+                                            )
+                                        }
+                                    }
+
                                     // App Deep Link / Share Button
                                     IconButton(
                                         onClick = { showDeepLinkDialog = true },
@@ -497,6 +529,7 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onNavigateToRecommendations = { viewModel.selectTab(AppNavTab.RECOMMENDATIONS) },
                                     onOpenLinkTester = { showDeepLinkDialog = true },
+                                    onOpenNetlifyWebStore = { showNetlifyWebStoreDialog = true },
                                     isGuest = currentUser == null,
                                     onRequireSignIn = { reason ->
                                         signInPromptReason = reason
@@ -757,6 +790,19 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+                        // Netlify Live Web Store In-App Viewer
+                        if (showNetlifyWebStoreDialog) {
+                            NetlifyWebStoreDialog(
+                                onDismissRequest = { showNetlifyWebStoreDialog = false },
+                                onOpenNativeRoute = { uri ->
+                                    handleDeepLink(uri)
+                                },
+                                onShowMessage = { msg ->
+                                    viewModel.showSnackbar(msg)
+                                }
+                            )
+                        }
+
                         // App Deep Link Tester & Share Dialog
                         if (showDeepLinkDialog) {
                             AppDeepLinkDialog(
@@ -884,6 +930,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        val isNetlify = host.contains("nehamycartapp.netlify.app")
+
         // 2. Tab routing
         when {
             path.startsWith("/profile") || host == "profile" ||
@@ -893,8 +941,18 @@ class MainActivity : ComponentActivity() {
             path.startsWith("/cart") || host == "cart" -> {
                 viewModel.selectTab(AppNavTab.CART)
             }
-            path.startsWith("/tracking") || host == "tracking" ||
+            path.startsWith("/favorites") || host == "favorites" -> {
+                viewModel.selectTab(AppNavTab.FAVORITES)
+            }
             path.startsWith("/orders") || host == "orders" -> {
+                if (FirebaseAuth.getInstance().currentUser == null) {
+                    viewModel.showSnackbar("Sign in with Google to view order history.")
+                    viewModel.selectTab(AppNavTab.SHOP)
+                } else {
+                    viewModel.selectTab(AppNavTab.ORDERS)
+                }
+            }
+            path.startsWith("/tracking") || host == "tracking" -> {
                 if (FirebaseAuth.getInstance().currentUser == null) {
                     viewModel.showSnackbar("Sign in with Google to access order tracking.")
                     viewModel.selectTab(AppNavTab.SHOP)
@@ -906,6 +964,7 @@ class MainActivity : ComponentActivity() {
                 viewModel.selectTab(AppNavTab.SHOP)
             }
         }
-        viewModel.showSnackbar("Opened link: $fullLink")
+        val message = if (isNetlify) "Connected to Netlify Store: $fullLink" else "Opened link: $fullLink"
+        viewModel.showSnackbar(message)
     }
 }

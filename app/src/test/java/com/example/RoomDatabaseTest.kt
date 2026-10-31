@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.data.local.AppDatabase
 import com.example.data.local.dao.CartDao
 import com.example.data.local.dao.CartItemDao
+import com.example.data.local.dao.OfflineProductDao
 import com.example.data.local.dao.ProductDao
 import com.example.data.local.entity.CartItem
 import com.example.data.local.entity.CartItemEntity
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -33,6 +35,7 @@ class RoomDatabaseTest {
     private lateinit var productDao: ProductDao
     private lateinit var cartDao: CartDao
     private lateinit var cartItemDao: CartItemDao
+    private lateinit var offlineProductDao: OfflineProductDao
 
     @Before
     fun createDb() {
@@ -43,6 +46,7 @@ class RoomDatabaseTest {
         productDao = db.productDao()
         cartDao = db.cartDao()
         cartItemDao = db.cartItemDao()
+        offlineProductDao = db.offlineProductDao()
     }
 
     @After
@@ -479,5 +483,146 @@ class RoomDatabaseTest {
         assertEquals("₹3,499", retrieved[0].formattedPriceInInr)
         assertEquals("₹1,499", retrieved[1].formattedPriceInInr)
     }
+
+    @Test
+    fun productRoomEntityStoresDetailsForOfflineShoppingListManagement() = runBlocking {
+        offlineProductDao.deleteAll()
+        assertEquals(0, offlineProductDao.getProductCount())
+
+        // 1. Create Product entity with name, price, description, and category
+        val item = com.example.data.local.entity.Product(
+            name = "Organic Green Tea",
+            price = 399.0,
+            description = "Antioxidant rich whole leaf Darjeeling green tea",
+            category = "Groceries"
+        )
+
+        assertEquals("Organic Green Tea", item.name)
+        assertEquals(399.0, item.price, 0.001)
+        assertEquals(399.0, item.priceInInr, 0.001)
+        assertEquals("Antioxidant rich whole leaf Darjeeling green tea", item.description)
+        assertEquals("Groceries", item.category)
+        assertFalse("Item should start as unpurchased", item.isPurchased)
+        assertEquals(1, item.quantity)
+        assertEquals("₹399", item.formattedPriceInInr)
+
+        // 2. Insert into database
+        val generatedId = offlineProductDao.insert(item)
+        assertTrue("Auto-generated ID should be > 0", generatedId > 0)
+        assertEquals(1, offlineProductDao.getProductCount())
+
+        // 3. Query back by ID
+        val loaded = offlineProductDao.getProductByIdSync(generatedId.toInt())
+        assertNotNull(loaded)
+        assertEquals("Organic Green Tea", loaded?.name)
+        assertEquals(399.0, loaded?.price ?: 0.0, 0.001)
+        assertEquals("Antioxidant rich whole leaf Darjeeling green tea", loaded?.description)
+        assertEquals("Groceries", loaded?.category)
+
+        // 4. Update purchasing state for offline shopping list
+        offlineProductDao.updatePurchasedState(generatedId.toInt(), true)
+        val updatedState = offlineProductDao.getProductByIdSync(generatedId.toInt())
+        assertTrue("Item should now be marked as purchased", updatedState?.isPurchased == true)
+
+        // 5. Query by category
+        val groceries = offlineProductDao.getProductsByCategorySync("Groceries")
+        assertEquals(1, groceries.size)
+        assertEquals("Organic Green Tea", groceries[0].name)
+    }
+
+    @Test
+    fun productEntityConstructorsSupportOfflineShoppingParameters() {
+        // Constructor with name, price, description, category
+        val productWithCategory = com.example.data.local.entity.Product(
+            name = "Alphonso Mangoes 1 Dozen",
+            price = 1200.0,
+            description = "Naturally ripened Ratnagiri Alphonso mangoes",
+            category = "Groceries"
+        )
+        assertEquals("Alphonso Mangoes 1 Dozen", productWithCategory.name)
+        assertEquals(1200.0, productWithCategory.price, 0.001)
+        assertEquals("Naturally ripened Ratnagiri Alphonso mangoes", productWithCategory.description)
+        assertEquals("Groceries", productWithCategory.category)
+
+        // Constructor with Int id, name, price, description, category
+        val productWithIntId = com.example.data.local.entity.Product(
+            id = 42,
+            name = "Silk Cotton Kurta",
+            price = 1899.0,
+            description = "Handcrafted festive kurta with mandarin collar",
+            category = "Ethnic Wear"
+        )
+        assertEquals(42, productWithIntId.id)
+        assertEquals("Silk Cotton Kurta", productWithIntId.name)
+        assertEquals(1899.0, productWithIntId.price, 0.001)
+        assertEquals("Ethnic Wear", productWithIntId.category)
+
+        // Constructor with Long id
+        val productWithLongId = com.example.data.local.entity.Product(
+            id = 99L,
+            name = "Brass Pooja Diya",
+            price = 450.0,
+            description = "Traditional handcrafted brass oil lamp",
+            category = "Home & Living"
+        )
+        assertEquals(99, productWithLongId.id)
+        assertEquals("Brass Pooja Diya", productWithLongId.name)
+        assertEquals("Home & Living", productWithLongId.category)
+
+        // Constructor with String id
+        val productWithStringId = com.example.data.local.entity.Product(
+            id = "105",
+            name = "Wireless Mouse",
+            price = 799.0,
+            description = "Silent click ergonomic mouse",
+            category = "Electronics"
+        )
+        assertEquals(105, productWithStringId.id)
+        assertEquals("Wireless Mouse", productWithStringId.name)
+        assertEquals("Electronics", productWithStringId.category)
+    }
+
+    @Test
+    fun offlineProductDaoBatchOperationsAndFiltering() = runBlocking {
+        offlineProductDao.deleteAll()
+
+        val items = listOf(
+            com.example.data.local.entity.Product(name = "Basmati Rice 5kg", price = 850.0, description = "Aromatic aged rice", category = "Groceries"),
+            com.example.data.local.entity.Product(name = "Cold Pressed Mustard Oil", price = 240.0, description = "Kachi ghani oil", category = "Groceries"),
+            com.example.data.local.entity.Product(name = "Cotton Bath Towel", price = 499.0, description = "100% Turkish cotton", category = "Home & Living"),
+            com.example.data.local.entity.Product(name = "Bluetooth Earbuds", price = 2199.0, description = "30 hour playtime with bass boost", category = "Electronics")
+        )
+
+        offlineProductDao.insertAll(items)
+        assertEquals(4, offlineProductDao.getProductCount())
+
+        // Search products by name substring
+        val searchResults = offlineProductDao.searchProducts("Oil").first()
+        assertEquals(1, searchResults.size)
+        assertEquals("Cold Pressed Mustard Oil", searchResults[0].name)
+
+        // Query by category
+        val groceries = offlineProductDao.getProductsByCategory("Groceries").first()
+        assertEquals(2, groceries.size)
+
+        // Query pending vs purchased
+        val pendingList = offlineProductDao.getProductsByPurchasedState(false).first()
+        assertEquals(4, pendingList.size)
+
+        // Mark one as purchased
+        offlineProductDao.updatePurchasedState(groceries[0].id, true)
+        val purchasedList = offlineProductDao.getProductsByPurchasedState(true).first()
+        assertEquals(1, purchasedList.size)
+        assertEquals(groceries[0].name, purchasedList[0].name)
+
+        // Delete single item
+        offlineProductDao.deleteProductById(groceries[1].id)
+        assertEquals(3, offlineProductDao.getProductCount())
+
+        // Clear all
+        offlineProductDao.deleteAll()
+        assertEquals(0, offlineProductDao.getProductCount())
+    }
 }
+
 

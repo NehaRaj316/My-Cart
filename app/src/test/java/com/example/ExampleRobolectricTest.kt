@@ -129,4 +129,45 @@ class ExampleRobolectricTest {
         val activity = controller.create().start().resume().get()
         assertNotNull(activity)
     }
+
+    @Test
+    fun `nehamycartapp netlify app deep link intent filter resolves to MainActivity`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val packageManager = context.packageManager
+
+        // Root Netlify url
+        val netlifyRootIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://nehamycartapp.netlify.app/")).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+            addCategory(Intent.CATEGORY_DEFAULT)
+        }
+        val rootResolveInfo = packageManager.resolveActivity(netlifyRootIntent, 0)
+        assertNotNull("Root deep link for nehamycartapp.netlify.app should resolve to an activity", rootResolveInfo)
+        assertEquals(MainActivity::class.java.name, rootResolveInfo?.activityInfo?.name)
+
+        // Cart Netlify url
+        val netlifyCartIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://nehamycartapp.netlify.app/cart")).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+            addCategory(Intent.CATEGORY_DEFAULT)
+        }
+        val cartResolveInfo = packageManager.resolveActivity(netlifyCartIntent, 0)
+        assertNotNull("Cart deep link for nehamycartapp.netlify.app should resolve to an activity", cartResolveInfo)
+        assertEquals(MainActivity::class.java.name, cartResolveInfo?.activityInfo?.name)
+
+        // Product Netlify url
+        val netlifyProductIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://nehamycartapp.netlify.app/product?id=prod_1")).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+            addCategory(Intent.CATEGORY_DEFAULT)
+        }
+        val productResolveInfo = packageManager.resolveActivity(netlifyProductIntent, 0)
+        assertNotNull("Product deep link for nehamycartapp.netlify.app should resolve to an activity", productResolveInfo)
+        assertEquals(MainActivity::class.java.name, productResolveInfo?.activityInfo?.name)
+    }
+
+    @Test
+    fun `main activity handles netlify app deep link data`() {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://nehamycartapp.netlify.app/cart"))
+        val controller = Robolectric.buildActivity(MainActivity::class.java, intent)
+        val activity = controller.create().start().resume().get()
+        assertNotNull(activity)
+    }
 }

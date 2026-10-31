@@ -59,6 +59,65 @@ data class ProductEntity(
     )
 
     /**
+     * Secondary constructor supporting name, price in INR, description, and category.
+     */
+    @Ignore
+    constructor(
+        name: String,
+        price: Double,
+        description: String,
+        category: String
+    ) : this(
+        id = UUID.randomUUID().toString(),
+        title = name,
+        name = name,
+        subtitle = "",
+        category = category,
+        price = price,
+        description = description
+    )
+
+    /**
+     * Secondary constructor supporting id, name, price in INR, description, and category.
+     */
+    @Ignore
+    constructor(
+        id: String,
+        name: String,
+        price: Double,
+        description: String,
+        category: String
+    ) : this(
+        id = id,
+        title = name,
+        name = name,
+        subtitle = "",
+        category = category,
+        price = price,
+        description = description
+    )
+
+    /**
+     * Secondary constructor supporting int id, name, price in INR, description, and category.
+     */
+    @Ignore
+    constructor(
+        id: Int,
+        name: String,
+        price: Double,
+        description: String,
+        category: String
+    ) : this(
+        id = id.toString(),
+        title = name,
+        name = name,
+        subtitle = "",
+        category = category,
+        price = price,
+        description = description
+    )
+
+    /**
      * Secondary constructor supporting id, name, price in INR, and description.
      */
     @Ignore

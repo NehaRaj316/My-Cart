@@ -58,13 +58,13 @@ fun ProductShareDialog(
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val productUrl = "https://cartify.app/product/${product.id}"
-    val shareText = "🛍️ Check out this amazing find on Cartify!\n\n" +
+    val productUrl = "https://nehamycartapp.netlify.app/product?id=${product.id}"
+    val shareText = "🛍️ Check out this amazing find on Neha My Cart!\n\n" +
             "✨ *${product.title}*\n" +
             "🏷️ Price: *${CurrencyUtil.formatInr(product.price)}* (${product.discountPercent}% OFF)\n" +
             "⭐ Rating: ${product.rating} / 5.0\n" +
-            "📦 Free Express Delivery with code CARTIFY20\n\n" +
-            "👉 Tap link to view in 3D & order: $productUrl"
+            "📦 Free Express Delivery across India\n\n" +
+            "👉 Tap to view in 3D & order: $productUrl"
 
     fun shareToApp(packageName: String?, fallbackName: String) {
         val intent = Intent(Intent.ACTION_SEND).apply {

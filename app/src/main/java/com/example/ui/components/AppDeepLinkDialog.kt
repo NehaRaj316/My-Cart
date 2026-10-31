@@ -80,7 +80,35 @@ fun AppDeepLinkDialog(
     val linkOptions = remember {
         listOf(
             DeepLinkOption(
-                title = "App Launch",
+                title = "Netlify Live Web App",
+                icon = "🌐",
+                url = "https://nehamycartapp.netlify.app/",
+                description = "Live deployed site on Netlify (tap to test deep link or open)",
+                category = "Netlify Web App"
+            ),
+            DeepLinkOption(
+                title = "Netlify Web Cart",
+                icon = "🛒",
+                url = "https://nehamycartapp.netlify.app/cart",
+                description = "Opens cart route on deployed Netlify web app or native app",
+                category = "Netlify Web App"
+            ),
+            DeepLinkOption(
+                title = "Netlify Product: Sony ANC",
+                icon = "🎧",
+                url = "https://nehamycartapp.netlify.app/product?id=prod_1",
+                description = "Opens Sony WH-1000XM5 on netlify.app",
+                category = "Netlify Web App"
+            ),
+            DeepLinkOption(
+                title = "Netlify AI Picks",
+                icon = "✨",
+                url = "https://nehamycartapp.netlify.app/recommendations",
+                description = "Opens personalized curation route on netlify.app",
+                category = "Netlify Web App"
+            ),
+            DeepLinkOption(
+                title = "App Launch (Direct Scheme)",
                 icon = "⚡",
                 url = "nehamycartapp://open",
                 description = "Bypasses web DNS; guaranteed instant opening on any device",

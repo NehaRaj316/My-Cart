@@ -8,14 +8,16 @@ import androidx.room.TypeConverters
 import com.example.data.local.converter.Converters
 import com.example.data.local.dao.CartDao
 import com.example.data.local.dao.CartItemDao
+import com.example.data.local.dao.OfflineProductDao
 import com.example.data.local.dao.ProductDao
 import com.example.data.local.entity.CartItem
 import com.example.data.local.entity.CartItemEntity
+import com.example.data.local.entity.Product
 import com.example.data.local.entity.ProductEntity
 
 @Database(
-    entities = [ProductEntity::class, CartItemEntity::class, CartItem::class],
-    version = 3,
+    entities = [ProductEntity::class, CartItemEntity::class, CartItem::class, Product::class],
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -24,6 +26,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun cartDao(): CartDao
     abstract fun cartItemDao(): CartItemDao
+    abstract fun offlineProductDao(): OfflineProductDao
+    fun shoppingListDao(): OfflineProductDao = offlineProductDao()
 
     companion object {
         @Volatile

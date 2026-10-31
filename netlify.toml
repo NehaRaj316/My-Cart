@@ -1,3 +1,59 @@
+# Netlify Configuration for Neha My Cart Web Store & Android App Links
+[build]
+  publish = "public"
+
+# 1. Digital Asset Links headers for Android App Link domain auto-verification
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
+    Access-Control-Allow-Origin = "*"
+
+# 2. General CORS & Security Headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+
+# 3. Dedicated Route redirects to index.html (SPA routing for deep links)
+[[redirects]]
+  from = "/cart"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/product"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/product/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/recommendations"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/tracking"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/orders"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/favorites"
+  to = "/index.html"
+  status = 200
+
+# 4. Global single-page application redirect: rewrite all routes to index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"

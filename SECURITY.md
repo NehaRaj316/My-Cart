@@ -15,7 +15,10 @@ currently being supported with security updates.
 ## Reporting a Vulnerability
 
 Contact Email:rajn76411@gmail.com
+
 Response Timeline:within 48 hours
+
+
 Disclosure Policy:
 
 Please do not open public GitHub issues to report security vulnerabilities. 

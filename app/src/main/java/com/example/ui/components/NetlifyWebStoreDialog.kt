@@ -75,6 +75,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 const val NETLIFY_DEPLOYED_URL = "https://nehamycartapp.netlify.app/"
+const val GITHUB_PAGES_URL = "https://neharaj316.github.io/My-Cart/"
 
 /**
  * Interactive In-App Web Viewer for the deployed Netlify web application.
@@ -95,6 +96,8 @@ fun NetlifyWebStoreDialog(
     var isLoading by remember { mutableStateOf(true) }
     var loadProgress by remember { mutableIntStateOf(0) }
     var hasError by remember { mutableStateOf(false) }
+    var rendererCrashed by remember { mutableStateOf(false) }
+    var webViewKey by remember { mutableIntStateOf(0) }
     var errorMessage by remember { mutableStateOf("") }
 
     Dialog(
@@ -317,10 +320,10 @@ fun NetlifyWebStoreDialog(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             val destinations = listOf(
-                                "🏠 Storefront" to NETLIFY_DEPLOYED_URL,
+                                "🏠 Store" to NETLIFY_DEPLOYED_URL,
+                                "🐙 GitHub Pages" to GITHUB_PAGES_URL,
                                 "🛒 Cart" to "${NETLIFY_DEPLOYED_URL}cart",
-                                "✨ AI Picks" to "${NETLIFY_DEPLOYED_URL}recommendations",
-                                "📦 Orders" to "${NETLIFY_DEPLOYED_URL}orders"
+                                "✨ AI Picks" to "${NETLIFY_DEPLOYED_URL}recommendations"
                             )
 
                             destinations.forEach { (label, destUrl) ->
@@ -362,114 +365,121 @@ fun NetlifyWebStoreDialog(
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    AndroidView(
-                        factory = { ctx ->
-                            try {
-                                WebView(ctx).apply {
-                                    // Disable hardware acceleration to prevent Chromium GPU/seccomp crashes in container emulators
-                                    setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                    if (!rendererCrashed) {
+                        androidx.compose.runtime.key(webViewKey) {
+                            AndroidView(
+                                factory = { ctx ->
+                                    try {
+                                        WebView(ctx).apply {
+                                            settings.javaScriptEnabled = true
+                                            settings.domStorageEnabled = true
+                                            settings.loadWithOverviewMode = true
+                                            settings.useWideViewPort = true
+                                            settings.setSupportZoom(true)
+                                            settings.builtInZoomControls = true
+                                            settings.displayZoomControls = false
+                                            settings.databaseEnabled = true
+                                            settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
+                                            settings.loadsImagesAutomatically = true
 
-                                    settings.javaScriptEnabled = true
-                                    settings.domStorageEnabled = true
-                                    settings.loadWithOverviewMode = true
-                                    settings.useWideViewPort = true
-                                    settings.setSupportZoom(true)
-                                    settings.builtInZoomControls = true
-                                    settings.displayZoomControls = false
+                                            webViewClient = object : WebViewClient() {
+                                                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                                                    super.onPageStarted(view, url, favicon)
+                                                    isLoading = true
+                                                    hasError = false
+                                                    url?.let { currentUrl = it }
+                                                }
 
-                                    webViewClient = object : WebViewClient() {
-                                        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                                            super.onPageStarted(view, url, favicon)
-                                            isLoading = true
-                                            hasError = false
-                                            url?.let { currentUrl = it }
-                                        }
+                                                override fun onPageFinished(view: WebView?, url: String?) {
+                                                    super.onPageFinished(view, url)
+                                                    isLoading = false
+                                                    url?.let { currentUrl = it }
+                                                }
 
-                                        override fun onPageFinished(view: WebView?, url: String?) {
-                                            super.onPageFinished(view, url)
-                                            isLoading = false
-                                            url?.let { currentUrl = it }
-                                        }
+                                                override fun onReceivedError(
+                                                    view: WebView?,
+                                                    request: WebResourceRequest?,
+                                                    error: WebResourceError?
+                                                ) {
+                                                    super.onReceivedError(view, request, error)
+                                                    if (request?.isForMainFrame == true) {
+                                                        isLoading = false
+                                                        hasError = true
+                                                        errorMessage = error?.description?.toString() ?: "Failed to connect to Netlify server"
+                                                    }
+                                                }
 
-                                        override fun onReceivedError(
-                                            view: WebView?,
-                                            request: WebResourceRequest?,
-                                            error: WebResourceError?
-                                        ) {
-                                            super.onReceivedError(view, request, error)
-                                            if (request?.isForMainFrame == true) {
-                                                isLoading = false
-                                                hasError = true
-                                                errorMessage = error?.description?.toString() ?: "Failed to connect to Netlify server"
+                                                /**
+                                                 * CRITICAL: Handles Chromium sandboxed renderer process crashes (code -1) in emulator containers.
+                                                 * Returning true prevents Android from terminating the host application process.
+                                                 * Setting rendererCrashed = true unmounts AndroidView so Compose never touches the dead native view.
+                                                 */
+                                                override fun onRenderProcessGone(
+                                                    view: WebView?,
+                                                    detail: RenderProcessGoneDetail?
+                                                ): Boolean {
+                                                    isLoading = false
+                                                    hasError = true
+                                                    rendererCrashed = true
+                                                    val didCrash = detail?.didCrash() ?: false
+                                                    errorMessage = if (didCrash) {
+                                                        "Chromium isolated renderer was reset by container memory limit. Tap 'Open in Browser' to view with full performance."
+                                                    } else {
+                                                        "Renderer was reclaimed by system. Tap 'Open in Browser' to view."
+                                                    }
+                                                    try {
+                                                        (view?.parent as? ViewGroup)?.removeView(view)
+                                                        view?.destroy()
+                                                    } catch (_: Exception) {}
+                                                    webViewInstance = null
+                                                    return true
+                                                }
+
+                                                override fun shouldOverrideUrlLoading(
+                                                    view: WebView?,
+                                                    request: WebResourceRequest?
+                                                ): Boolean {
+                                                    val nextUrl = request?.url ?: return false
+                                                    val scheme = nextUrl.scheme.orEmpty().lowercase()
+                                                    if (scheme == "nehamycartapp" || scheme == "nehamycart" || scheme == "mycart") {
+                                                        onOpenNativeRoute?.invoke(nextUrl)
+                                                        onDismissRequest()
+                                                        return true
+                                                    }
+                                                    return false
+                                                }
                                             }
-                                        }
 
-                                        /**
-                                         * CRITICAL: Handles Chromium sandboxed renderer process crashes (code -1) in emulator containers.
-                                         * Returning true prevents Android from terminating the host application process.
-                                         */
-                                        override fun onRenderProcessGone(
-                                            view: WebView?,
-                                            detail: RenderProcessGoneDetail?
-                                        ): Boolean {
-                                            isLoading = false
-                                            hasError = true
-                                            val didCrash = detail?.didCrash() ?: false
-                                            errorMessage = if (didCrash) {
-                                                "Chromium renderer process was reset in emulator. Tap 'Open in Browser' to browse live."
-                                            } else {
-                                                "System reclaimed renderer memory in container. Tap 'Open in Browser' to browse live."
+                                            webChromeClient = object : WebChromeClient() {
+                                                override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                                                    super.onProgressChanged(view, newProgress)
+                                                    loadProgress = newProgress
+                                                    if (newProgress >= 100) {
+                                                        isLoading = false
+                                                    }
+                                                }
                                             }
-                                            try {
-                                                (view?.parent as? ViewGroup)?.removeView(view)
-                                                view?.destroy()
-                                            } catch (_: Exception) {}
-                                            webViewInstance = null
-                                            return true
-                                        }
 
-                                        override fun shouldOverrideUrlLoading(
-                                            view: WebView?,
-                                            request: WebResourceRequest?
-                                        ): Boolean {
-                                            val nextUrl = request?.url ?: return false
-                                            val scheme = nextUrl.scheme.orEmpty().lowercase()
-                                            if (scheme == "nehamycartapp" || scheme == "nehamycart" || scheme == "mycart") {
-                                                onOpenNativeRoute?.invoke(nextUrl)
-                                                onDismissRequest()
-                                                return true
-                                            }
-                                            return false
+                                            loadUrl(currentUrl)
+                                            webViewInstance = this
                                         }
+                                    } catch (t: Throwable) {
+                                        hasError = true
+                                        rendererCrashed = true
+                                        errorMessage = "WebView could not be initialized in this environment. Tap 'Open in Browser'."
+                                        View(ctx)
                                     }
+                                },
+                                update = { view ->
+                                    // Update logic if needed
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
 
-                                    webChromeClient = object : WebChromeClient() {
-                                        override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                                            super.onProgressChanged(view, newProgress)
-                                            loadProgress = newProgress
-                                            if (newProgress >= 100) {
-                                                isLoading = false
-                                            }
-                                        }
-                                    }
-
-                                    loadUrl(initialUrl)
-                                    webViewInstance = this
-                                }
-                            } catch (t: Throwable) {
-                                hasError = true
-                                errorMessage = "WebView could not be initialized in this environment. Tap 'Open in Browser'."
-                                View(ctx)
-                            }
-                        },
-                        update = { view ->
-                            // Update logic if needed
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
-
-                    // Error fallback display if host cannot be reached
-                    if (hasError) {
+                    // Error fallback display if host cannot be reached or renderer process went away
+                    if (hasError || rendererCrashed) {
                         Surface(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -491,7 +501,7 @@ fun NetlifyWebStoreDialog(
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text(
-                                    text = "Could not load Web Store",
+                                    text = if (rendererCrashed) "Container Renderer Memory Limit" else "Could not load Web Store",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -499,24 +509,33 @@ fun NetlifyWebStoreDialog(
                                 Text(
                                     text = errorMessage.ifEmpty { "Check internet connection or open directly in your phone's browser." },
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Button(
                                         onClick = {
                                             hasError = false
+                                            rendererCrashed = false
                                             isLoading = true
-                                            webViewInstance?.loadUrl(currentUrl)
+                                            webViewKey++
                                         }
                                     ) {
-                                        Text("Retry ↻")
+                                        Text("Retry In-App ↻")
                                     }
-                                    OutlinedButton(
+                                    Button(
                                         onClick = {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(currentUrl))
-                                            context.startActivity(intent)
-                                        }
+                                            try {
+                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(currentUrl))
+                                                context.startActivity(intent)
+                                            } catch (e: Exception) {
+                                                onShowMessage("Could not launch browser: ${e.message}")
+                                            }
+                                        },
+                                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary
+                                        )
                                     ) {
                                         Text("Open in Browser ↗")
                                     }

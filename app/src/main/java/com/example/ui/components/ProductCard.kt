@@ -59,15 +59,11 @@ fun ProductCard(
     showRecommendationBadge: Boolean = true,
     onOpen3DView: (() -> Unit)? = null
 ) {
-    Card(
-        modifier = modifier
-            .testTag("product_card_${product.id}")
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onCardClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ClayCard(
+        modifier = modifier.testTag("product_card_${product.id}"),
+        shape = RoundedCornerShape(24.dp),
+        elevation = 6.dp,
+        onClick = onCardClick
     ) {
         Column(
             modifier = Modifier

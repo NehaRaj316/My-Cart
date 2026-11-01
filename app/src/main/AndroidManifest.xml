@@ -14,6 +14,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:largeHeap="true"
+        android:hardwareAccelerated="true"
         android:theme="@style/Theme.MyApplication">
         <activity
             android:name=".MainActivity"
@@ -35,13 +37,14 @@
                 <data android:scheme="http" />
                 <data android:scheme="https" />
                 <data android:host="nehamycartapp.netlify.app" />
+                <data android:host="neharaj316.github.io" />
                 <data android:host="nehamycartapp.com" />
                 <data android:host="www.nehamycartapp.com" />
                 <data android:host="myapp.com" />
                 <data android:host="www.myapp.com" />
             </intent-filter>
 
-            <!-- NETLIFY APP LINK INTENT FILTER -->
+            <!-- NETLIFY & GITHUB PAGES APP LINK INTENT FILTER -->
             <intent-filter android:label="Open with Neha My Cart" android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -50,6 +53,7 @@
                 <data android:scheme="https" />
                 <data android:scheme="http" />
                 <data android:host="nehamycartapp.netlify.app" />
+                <data android:host="neharaj316.github.io" />
             </intent-filter>
 
             <!-- FIREBASE DYNAMIC LINKS & HOSTING INTENT FILTER -->

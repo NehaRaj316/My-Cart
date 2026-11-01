@@ -2188,7 +2188,7 @@
         reviews: 428,
         badge: "Top AI Pick",
         desc: "Studio-grade 40mm beryllium drivers with adaptive hybrid ANC, 45-hour battery life, and spatial audio with dynamic head tracking.",
-        img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80",
+        img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop&q=80",
         icon: "🎧",
         color: "#4F46E5",
         colors: ["#0F172A", "#475569", "#4F46E5"],
@@ -2212,7 +2212,7 @@
         reviews: 215,
         badge: "Trending",
         desc: "Immersive backlighting with 16 million colors, millimeter-wave motion sensor, and real-time audio sync for home theater or workspace.",
-        img: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80",
+        img: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400&auto=format&fit=crop&q=80",
         icon: "💡",
         color: "#0284C7",
         colors: ["#0284C7", "#4F46E5", "#9333EA"],
@@ -2236,7 +2236,7 @@
         reviews: 184,
         badge: "Editor's Choice",
         desc: "Engineered from ballistic Cordura 1000D with Fidlock V-buckle, expandable 7L compartment, and dedicated padded tablet sleeve.",
-        img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80",
+        img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=80",
         icon: "🎒",
         color: "#334155",
         colors: ["#1E293B", "#334155", "#14532D"],
@@ -2260,7 +2260,7 @@
         reviews: 512,
         badge: "Best Seller",
         desc: "Grade 5 Titanium with sapphire crystal, ECG sensor, dual-band GPS route navigation, and up to 14 days endurance in smartwatch mode.",
-        img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80",
+        img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop&q=80",
         icon: "⌚",
         color: "#EA580C",
         colors: ["#0F172A", "#EA580C", "#64748B"],
@@ -2863,8 +2863,14 @@
       init3DCanvas();
     }
 
+    let animation3DFrameId = null;
+
     function close3DModal() {
       document.getElementById('modal3D').classList.remove('open');
+      if (animation3DFrameId) {
+        cancelAnimationFrame(animation3DFrameId);
+        animation3DFrameId = null;
+      }
     }
 
     function switch3DColor(hex, el) {
@@ -2874,6 +2880,10 @@
     }
 
     function init3DCanvas() {
+      if (animation3DFrameId) {
+        cancelAnimationFrame(animation3DFrameId);
+        animation3DFrameId = null;
+      }
       const canvas = document.getElementById('canvas3d');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -3055,10 +3065,10 @@
         ctx.stroke();
 
         ctx.restore();
-        requestAnimationFrame(renderFrame);
+        animation3DFrameId = requestAnimationFrame(renderFrame);
       }
 
-      renderFrame();
+      animation3DFrameId = requestAnimationFrame(renderFrame);
     }
 
     function addActiveProductToCart() {

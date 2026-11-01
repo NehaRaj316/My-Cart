@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.aistudio.cartify.kxpqz",
+    "sha256_cert_fingerprints": [
+      "5A:10:3D:B3:24:02:87:4E:9D:F6:1F:5D:F8:15:40:ED:20:20:B2:1F:10:85:22:FC:7A:8E:9D:A4:B3:74:1A:4D"
+    ]
+  }
+}]

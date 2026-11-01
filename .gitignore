@@ -1,3 +1,4 @@
+# Default project ignore rules
 *.iml
 .gradle
 .kotlin
@@ -15,6 +16,9 @@
 .cxx
 local.properties
 .env
+public/firebase-config.local.js
+public/firebase-config.js.local
+*.keystore
 debug.keystore
 *-debug.log
 

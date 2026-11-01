@@ -75,7 +75,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 const val NETLIFY_DEPLOYED_URL = "https://nehamycartapp.netlify.app/"
-const val GITHUB_PAGES_URL = "https://neharaj316.github.io/My-Cart/"
 
 /**
  * Interactive In-App Web Viewer for the deployed Netlify web application.
@@ -320,10 +319,10 @@ fun NetlifyWebStoreDialog(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             val destinations = listOf(
-                                "🏠 Store" to NETLIFY_DEPLOYED_URL,
-                                "🐙 GitHub Pages" to GITHUB_PAGES_URL,
+                                "🏠 Storefront" to NETLIFY_DEPLOYED_URL,
                                 "🛒 Cart" to "${NETLIFY_DEPLOYED_URL}cart",
-                                "✨ AI Picks" to "${NETLIFY_DEPLOYED_URL}recommendations"
+                                "✨ AI Picks" to "${NETLIFY_DEPLOYED_URL}recommendations",
+                                "📦 Orders" to "${NETLIFY_DEPLOYED_URL}orders"
                             )
 
                             destinations.forEach { (label, destUrl) ->

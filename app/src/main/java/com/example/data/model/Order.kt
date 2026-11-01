@@ -45,7 +45,7 @@ data class Order(
     val distanceKm: Float = 2.4f,
     val routeProgress: Float = 0.45f, // 0.0 to 1.0 along the route
     val courier: CourierInfo = CourierInfo(),
-    val deliveryAddress: String = "785 Oak St, Apt 4B, Metro City",
+    val deliveryAddress: String = "Khammam, Telangana",
     val deliveryInstructions: String = "Please leave at front door or ring bell",
     val trackingSteps: List<TrackingStep> = emptyList()
 )

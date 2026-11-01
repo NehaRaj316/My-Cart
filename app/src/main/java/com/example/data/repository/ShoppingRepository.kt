@@ -315,7 +315,7 @@ class ShoppingRepository(
             title = "Delivered to Door",
             description = "Recipient signature or front door drop-off",
             timeLabel = "Est. 11:40 AM",
-            location = "785 Oak St, Apt 4B",
+            location = "Khammam, Telangana",
             isCompleted = false,
             isCurrent = false
         )
@@ -338,7 +338,7 @@ class ShoppingRepository(
         distanceKm = 2.1f,
         routeProgress = 0.52f,
         courier = CourierInfo(),
-        deliveryAddress = "785 Oak St, Apt 4B, Metro City",
+        deliveryAddress = "Khammam, Telangana",
         deliveryInstructions = "Please leave at front door and ring doorbell",
         trackingSteps = initialSteps
     )
@@ -360,7 +360,7 @@ class ShoppingRepository(
             distanceKm = 0.0f,
             routeProgress = 1.0f,
             courier = CourierInfo(name = "Marcus Chen", vehicle = "EcoVan (EV-102)"),
-            deliveryAddress = "785 Oak St, Apt 4B, Metro City",
+            deliveryAddress = "Khammam, Telangana",
             trackingSteps = initialSteps.map { it.copy(isCompleted = true, isCurrent = false) }
         )
     )

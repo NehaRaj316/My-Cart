@@ -315,7 +315,7 @@ class ShoppingViewModel(
     }
 
     // Checkout flow
-    fun checkout(address: String = "785 Oak St, Apt 4B, Metro City") {
+    fun checkout(address: String = "Khammam, Telangana") {
         val currentCart = cartItems.value
         if (currentCart.isEmpty()) {
             _snackbarEvent.value = "Cart is empty"

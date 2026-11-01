@@ -73,7 +73,7 @@ fun CartScreen(
     modifier: Modifier = Modifier
 ) {
     var promoInput by remember { mutableStateOf(promoCode) }
-    var deliveryAddress by remember { mutableStateOf("785 Oak St, Apt 4B, Metro City") }
+    var deliveryAddress by remember { mutableStateOf("Khammam, Telangana") }
 
     val subtotal = cartItems.sumOf { it.totalPrice }
     val discount = if (isPromoApplied) subtotal * 0.20 else 0.0

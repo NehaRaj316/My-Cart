@@ -9,6 +9,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -190,7 +191,7 @@ class MainActivity : ComponentActivity() {
                                 isGuestMode = false
                             },
                             onUnauthenticated = {},
-                            scope = coroutineScope
+                            scope = lifecycleScope
                         )
                     }
                 }
@@ -362,7 +363,7 @@ class MainActivity : ComponentActivity() {
                                                         isGuestMode = false
                                                         viewModel.showSnackbar("Signed out")
                                                     },
-                                                    scope = coroutineScope
+                                                    scope = lifecycleScope
                                                 )
                                             },
                                             modifier = Modifier.testTag("top_bar_sign_out_button")

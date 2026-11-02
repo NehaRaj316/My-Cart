@@ -2,7 +2,11 @@ package com.example.ui.screens
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CancellationException
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -510,6 +514,17 @@ fun SignInPromptDialog(
     )
 }
 
+private fun findActivity(context: Context): Activity? {
+    var currentContext = context
+    while (currentContext is ContextWrapper) {
+        if (currentContext is Activity) {
+            return currentContext
+        }
+        currentContext = currentContext.baseContext
+    }
+    return null
+}
+
 fun onGoogleSignInClicked(
     context: Context,
     credentialManager: CredentialManager,
@@ -525,12 +540,21 @@ fun onGoogleSignInClicked(
         return
     }
 
+    val activity = findActivity(context)
+    if (activity == null) {
+        onAuthError("Activity not available for sign-in")
+        return
+    }
+
     val signInOption = GetSignInWithGoogleOption.Builder(serverClientId = clientId).build()
     val request = GetCredentialRequest.Builder().addCredentialOption(signInOption).build()
 
-    scope.launch {
+    // Use activity's lifecycleScope so authentication coroutine survives composable composition leaves
+    val executionScope = (activity as? ComponentActivity)?.lifecycleScope ?: scope
+
+    executionScope.launch {
         try {
-            val result = credentialManager.getCredential(context as Activity, request)
+            val result = credentialManager.getCredential(activity, request)
             val credential = result.credential
             if (credential is CustomCredential && credential.type == TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                 val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
@@ -543,6 +567,11 @@ fun onGoogleSignInClicked(
         } catch (e: GetCredentialCancellationException) {
             Log.w("Auth", "Google Sign-In flow cancelled or dismissed: ${e.message}", e)
             onAuthCancelled()
+        } catch (e: CancellationException) {
+            // Coroutine was cancelled (e.g. Activity finished or lifecycle scope cancelled).
+            // Do NOT treat as an auth error or trigger onAuthError!
+            Log.d("Auth", "Google Sign-In coroutine cancelled normally: ${e.message}")
+            throw e
         } catch (e: Exception) {
             Log.e("Auth", "Google Sign-In failed", e)
             onAuthError(e.localizedMessage ?: "Sign in failed")
@@ -568,6 +597,7 @@ fun attemptAutoSignIn(
         return
     }
 
+    val activity = findActivity(context) ?: return
     val googleIdOption = GetGoogleIdOption.Builder()
         .setFilterByAuthorizedAccounts(true)
         .setServerClientId(clientId)
@@ -576,9 +606,10 @@ fun attemptAutoSignIn(
 
     val request = GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build()
 
-    scope.launch {
+    val executionScope = (activity as? ComponentActivity)?.lifecycleScope ?: scope
+    executionScope.launch {
         try {
-            val result = credentialManager.getCredential(context, request)
+            val result = credentialManager.getCredential(activity, request)
             val credential = result.credential
             if (credential is CustomCredential && credential.type == TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                 val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
@@ -588,6 +619,8 @@ fun attemptAutoSignIn(
             } else {
                 onUnauthenticated()
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             onUnauthenticated()
         }
@@ -601,9 +634,13 @@ fun signOut(
     scope: CoroutineScope
 ) {
     Firebase.auth.signOut()
-    scope.launch {
+    val activity = findActivity(context)
+    val executionScope = (activity as? ComponentActivity)?.lifecycleScope ?: scope
+    executionScope.launch {
         try {
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e("Auth", "Failed to clear credential state", e)
         } finally {

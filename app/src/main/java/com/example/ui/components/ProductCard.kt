@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -57,7 +58,8 @@ fun ProductCard(
     onAddToCart: () -> Unit,
     modifier: Modifier = Modifier,
     showRecommendationBadge: Boolean = true,
-    onOpen3DView: (() -> Unit)? = null
+    onOpen3DView: (() -> Unit)? = null,
+    onSetPriceAlert: (() -> Unit)? = null
 ) {
     ClayCard(
         modifier = modifier.testTag("product_card_${product.id}"),
@@ -309,21 +311,44 @@ fun ProductCard(
                     }
                 }
 
-                FilledIconButton(
-                    onClick = onAddToCart,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .testTag("add_to_cart_${product.id}"),
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add to cart",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    if (onSetPriceAlert != null) {
+                        IconButton(
+                            onClick = onSetPriceAlert,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                                .testTag("price_alert_${product.id}")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.NotificationsActive,
+                                contentDescription = "Set Price Alert",
+                                tint = Color(0xFFD97706),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    FilledIconButton(
+                        onClick = onAddToCart,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .testTag("add_to_cart_${product.id}"),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add to cart",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }

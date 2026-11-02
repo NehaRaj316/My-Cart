@@ -89,6 +89,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.ReceiptLong
 import com.example.ui.components.AppDeepLinkDialog
 import com.example.ui.components.NetlifyWebStoreDialog
+import com.example.ui.components.PriceAlertDialog
 import com.example.ui.components.Product3DViewerDialog
 import com.example.ui.components.ProductDetailSheet
 import com.example.ui.components.ProductShareDialog
@@ -142,6 +143,7 @@ class MainActivity : ComponentActivity() {
                 var showNetlifyWebStoreDialog by remember { mutableStateOf(false) }
                 var active3DProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
                 var activeShareProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
+                var activePriceAlertProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
                 val snackbarHostState = remember { SnackbarHostState() }
                 val coroutineScope = rememberCoroutineScope()
                 val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -545,7 +547,8 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onResetFilters = viewModel::resetFilters,
                                     onOpen3DView = { product -> active3DProduct = product },
-                                    onShareProduct = { product -> activeShareProduct = product }
+                                    onShareProduct = { product -> activeShareProduct = product },
+                                    onSetPriceAlert = { product -> activePriceAlertProduct = product }
                                 )
                             }
                             AppNavTab.RECOMMENDATIONS -> {
@@ -586,6 +589,7 @@ class MainActivity : ComponentActivity() {
                                             viewModel.addToCart(product)
                                         }
                                     },
+                                    onSetPriceAlert = { product -> activePriceAlertProduct = product },
                                     isGuest = currentUser == null,
                                     onRequireSignIn = { reason ->
                                         signInPromptReason = reason
@@ -733,6 +737,7 @@ class MainActivity : ComponentActivity() {
                                     onProductClick = viewModel::openProductDetail,
                                     onOpen3DView = { product -> active3DProduct = product },
                                     onShareProduct = { product -> activeShareProduct = product },
+                                    onSetPriceAlert = { product -> activePriceAlertProduct = product },
                                     onNavigateBack = { viewModel.selectTab(AppNavTab.SHOP) },
                                     onBrowseCatalog = { viewModel.selectTab(AppNavTab.SHOP) }
                                 )
@@ -786,6 +791,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onOpen3DView = { active3DProduct = product },
                                 onShareProduct = { activeShareProduct = product },
+                                onSetPriceAlert = { activePriceAlertProduct = product },
                                 onShowMessage = { msg -> viewModel.showSnackbar(msg) }
                             )
                         }
@@ -840,6 +846,21 @@ class MainActivity : ComponentActivity() {
                                 onDismissRequest = { activeShareProduct = null },
                                 onShowMessage = { msg ->
                                     viewModel.showSnackbar(msg)
+                                }
+                            )
+                        }
+
+                        // Price Alert Target & Simulation Modal
+                        activePriceAlertProduct?.let { product ->
+                            PriceAlertDialog(
+                                product = product,
+                                onDismissRequest = { activePriceAlertProduct = null },
+                                onSetAlert = { targetPrice ->
+                                    viewModel.setPriceAlert(product.id, targetPrice)
+                                    activePriceAlertProduct = null
+                                },
+                                onSimulateDrop = { droppedPrice ->
+                                    viewModel.simulatePriceDrop(product.id, droppedPrice)
                                 }
                             )
                         }

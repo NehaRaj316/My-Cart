@@ -104,6 +104,7 @@ fun ShopHomeScreen(
     onResetFilters: () -> Unit = {},
     onOpen3DView: ((Product) -> Unit)? = null,
     onShareProduct: ((Product) -> Unit)? = null,
+    onSetPriceAlert: ((Product) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showFilterSheet by remember { mutableStateOf(false) }
@@ -753,6 +754,7 @@ fun ShopHomeScreen(
                                 onWishlistToggle = { onWishlistToggle(product.id) },
                                 onAddToCart = { onAddToCart(product) },
                                 showRecommendationBadge = true,
+                                onSetPriceAlert = { onSetPriceAlert?.invoke(product) },
                                 modifier = Modifier.width(180.dp)
                             )
                         }
@@ -828,6 +830,7 @@ fun ShopHomeScreen(
                         onAddToCart = { onAddToCart(product) },
                         showRecommendationBadge = false,
                         onOpen3DView = { onOpen3DView?.invoke(product) },
+                        onSetPriceAlert = { onSetPriceAlert?.invoke(product) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

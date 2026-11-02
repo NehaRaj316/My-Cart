@@ -10,6 +10,7 @@ import com.example.data.model.Product
 import com.example.data.model.TastePreference
 import com.example.data.model.UserPersona
 import com.example.data.repository.ShoppingRepository
+import com.example.util.CurrencyUtil
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -403,6 +404,40 @@ class ShoppingViewModel(
                     }
                 }
             }
+        }
+    }
+
+    // Price Alert State Management
+    private val _priceAlerts = MutableStateFlow<Map<String, Double>>(emptyMap())
+    val priceAlerts: StateFlow<Map<String, Double>> = _priceAlerts.asStateFlow()
+
+    fun setPriceAlert(productId: String, targetPrice: Double) {
+        val updated = _priceAlerts.value.toMutableMap()
+        updated[productId] = targetPrice
+        _priceAlerts.value = updated
+        val product = products.value.find { it.id == productId }
+        val name = product?.title ?: "Item"
+        _snackbarEvent.value = "🔔 Price alert set for $name at ${CurrencyUtil.formatRupees(targetPrice)}"
+    }
+
+    fun removePriceAlert(productId: String) {
+        val updated = _priceAlerts.value.toMutableMap()
+        updated.remove(productId)
+        _priceAlerts.value = updated
+        _snackbarEvent.value = "Price alert removed"
+    }
+
+    fun simulatePriceDrop(productId: String, droppedPrice: Double) {
+        val product = products.value.find { it.id == productId } ?: return
+        val target = _priceAlerts.value[productId] ?: (product.price * 0.90)
+
+        // Update product price in repository & Room
+        repository.updateProductPrice(productId, droppedPrice)
+
+        if (droppedPrice <= target) {
+            _snackbarEvent.value = "🎉 Price Drop Alert! ${product.title} dropped to ${CurrencyUtil.formatRupees(droppedPrice)} (below your target ${CurrencyUtil.formatRupees(target)})!"
+        } else {
+            _snackbarEvent.value = "Price updated to ${CurrencyUtil.formatRupees(droppedPrice)}"
         }
     }
 

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Star
@@ -72,6 +73,7 @@ fun ProductDetailSheet(
     onBuyNow: (selectedColor: Long) -> Unit,
     onOpen3DView: (() -> Unit)? = null,
     onShareProduct: (() -> Unit)? = null,
+    onSetPriceAlert: (() -> Unit)? = null,
     onShowMessage: ((String) -> Unit)? = null
 ) {
     var selectedColor by remember(product) { mutableStateOf(product.primaryColorHex) }
@@ -252,6 +254,24 @@ fun ProductDetailSheet(
                                 contentDescription = "Share product",
                                 tint = Color(0xFF0F172A)
                             )
+                        }
+
+                        // Price Alert Button
+                        if (onSetPriceAlert != null) {
+                            IconButton(
+                                onClick = onSetPriceAlert,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(alpha = 0.9f))
+                                    .testTag("detail_price_alert_btn")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.NotificationsActive,
+                                    contentDescription = "Set Price Alert",
+                                    tint = Color(0xFFD97706)
+                                )
+                            }
                         }
 
                         // Wishlist Button

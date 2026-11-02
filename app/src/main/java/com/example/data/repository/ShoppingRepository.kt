@@ -467,6 +467,24 @@ class ShoppingRepository(
         _products.value = updated
     }
 
+    fun updateProductPrice(productId: String, newPrice: Double) {
+        val updated = _products.value.map { product ->
+            if (product.id == productId) {
+                product.copy(price = newPrice)
+            } else {
+                product
+            }
+        }
+        _products.value = updated
+        if (productDao != null) {
+            coroutineScope.launch {
+                try {
+                    productDao.updatePrice(productId, newPrice)
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
     fun toggleWishlist(productId: String) {
         val current = _wishlistIds.value.toMutableSet()
         if (current.contains(productId)) {

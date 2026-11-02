@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -66,6 +67,7 @@ fun RecommendationsScreen(
     onProductClick: (Product) -> Unit,
     onWishlistToggle: (String) -> Unit,
     onAddToCart: (Product) -> Unit,
+    onSetPriceAlert: ((Product) -> Unit)? = null,
     isGuest: Boolean = false,
     onRequireSignIn: (String) -> Unit = {},
     modifier: Modifier = Modifier
@@ -436,18 +438,41 @@ fun RecommendationsScreen(
                             }
                         }
 
-                        Button(
-                            onClick = { onAddToCart(product) },
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.testTag("rec_add_btn_${product.id}")
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.ShoppingBag,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Add to Cart")
+                            if (onSetPriceAlert != null) {
+                                IconButton(
+                                    onClick = { onSetPriceAlert(product) },
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                                        .testTag("rec_price_alert_${product.id}")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.NotificationsActive,
+                                        contentDescription = "Set Price Alert",
+                                        tint = Color(0xFFD97706),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+
+                            Button(
+                                onClick = { onAddToCart(product) },
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.testTag("rec_add_btn_${product.id}")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ShoppingBag,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Add to Cart")
+                            }
                         }
                     }
                 }

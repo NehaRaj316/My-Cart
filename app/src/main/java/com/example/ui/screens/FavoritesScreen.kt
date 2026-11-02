@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ViewInAr
@@ -75,6 +76,7 @@ fun FavoritesScreen(
     onProductClick: (product: Product) -> Unit,
     onOpen3DView: (product: Product) -> Unit,
     onShareProduct: (product: Product) -> Unit,
+    onSetPriceAlert: ((product: Product) -> Unit)? = null,
     onNavigateBack: () -> Unit,
     onBrowseCatalog: () -> Unit,
     modifier: Modifier = Modifier
@@ -260,7 +262,8 @@ fun FavoritesScreen(
                         onRemoveFavorite = { onWishlistToggle(product.id) },
                         onAddToCart = { onAddToCart(product) },
                         onOpen3DView = { onOpen3DView(product) },
-                        onShareProduct = { onShareProduct(product) }
+                        onShareProduct = { onShareProduct(product) },
+                        onSetPriceAlert = onSetPriceAlert?.let { { it(product) } }
                     )
                 }
             }
@@ -342,7 +345,8 @@ private fun FavoriteItemCard(
     onRemoveFavorite: () -> Unit,
     onAddToCart: () -> Unit,
     onOpen3DView: () -> Unit,
-    onShareProduct: () -> Unit
+    onShareProduct: () -> Unit,
+    onSetPriceAlert: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier
@@ -502,6 +506,23 @@ private fun FavoriteItemCard(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(16.dp)
                         )
+                    }
+
+                    // Price Alert button
+                    if (onSetPriceAlert != null) {
+                        IconButton(
+                            onClick = onSetPriceAlert,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .testTag("fav_price_alert_${product.id}")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.NotificationsActive,
+                                contentDescription = "Set Price Alert",
+                                tint = Color(0xFFD97706),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
 
                     // Remove favorite button

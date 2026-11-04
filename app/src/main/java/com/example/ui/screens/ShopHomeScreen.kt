@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.OpenInBrowser
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
@@ -105,6 +106,7 @@ fun ShopHomeScreen(
     onOpen3DView: ((Product) -> Unit)? = null,
     onShareProduct: ((Product) -> Unit)? = null,
     onSetPriceAlert: ((Product) -> Unit)? = null,
+    onOpenQrScanner: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showFilterSheet by remember { mutableStateOf(false) }
@@ -286,6 +288,27 @@ fun ShopHomeScreen(
                             .weight(1f)
                             .testTag("search_input")
                     )
+
+                    // QR Code Scanner Action Button (Camera In-Store Scanner)
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier
+                            .size(54.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { onOpenQrScanner() }
+                            .testTag("qr_code_scanner_button"),
+                        tonalElevation = 2.dp
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.QrCodeScanner,
+                                contentDescription = "Scan In-Store QR Code",
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
 
                     // Filter Action Button with Active Badge
                     Box {

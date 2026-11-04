@@ -381,6 +381,22 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes scanLaser {
+      0% { top: 16px; opacity: 0.8; }
+      50% { top: 155px; opacity: 1; }
+      100% { top: 16px; opacity: 0.8; }
+    }
+
+    .star-pick {
+      color: #CBD5E1;
+      transition: color 0.15s, transform 0.12s;
+      user-select: none;
+    }
+    .star-pick:hover, .star-pick.active {
+      color: #F59E0B;
+      transform: scale(1.15);
+    }
+
     /* Hero Banner */
     .hero-banner {
       background: linear-gradient(135deg, #312E81 0%, #4338CA 60%, #0D9488 100%);
@@ -1266,6 +1282,11 @@
           <span>INR</span>
         </div>
 
+        <!-- In-Store QR Code Scanner -->
+        <button class="icon-btn" onclick="openQrScannerModal()" title="Scan In-Store Shelf QR Code" style="background: var(--primary-container); color: var(--on-primary-container); border-color: var(--primary);">
+          📷
+        </button>
+
         <!-- Wishlist Count -->
         <button class="icon-btn" onclick="switchTab('favorites')" title="Wishlist & Similar Picks">
           ❤️
@@ -1699,12 +1720,185 @@
         <div id="detailModalSpecs" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
           <!-- Specifications table -->
         </div>
+
+        <!-- Customer Ratings & Reviews Section -->
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3 style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+              <span>⭐</span> Customer Ratings & Reviews
+            </h3>
+            <span id="detailReviewsCountBadge" style="font-size: 12px; font-weight: 700; color: var(--text-muted);">
+              0 reviews
+            </span>
+          </div>
+
+          <!-- Overall Rating Summary Card -->
+          <div style="background: var(--surface-variant); padding: 16px; border-radius: 14px; margin-bottom: 18px; display: flex; gap: 20px; align-items: center;">
+            <div style="text-align: center; min-width: 80px;">
+              <div id="detailOverallRatingNum" style="font-size: 32px; font-weight: 800; color: #F59E0B; line-height: 1;">4.9</div>
+              <div id="detailOverallStars" style="font-size: 14px; color: #F59E0B; margin: 4px 0;">★★★★★</div>
+              <div id="detailTotalReviewsSubtitle" style="font-size: 11px; color: var(--text-muted);">Verified buyers</div>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                <span style="width: 24px;">5 ★</span>
+                <div style="flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                  <div style="width: 88%; height: 100%; background: #F59E0B; border-radius: 3px;"></div>
+                </div>
+                <span style="color: var(--text-muted); width: 28px; text-align: right;">88%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                <span style="width: 24px;">4 ★</span>
+                <div style="flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                  <div style="width: 10%; height: 100%; background: #F59E0B; border-radius: 3px;"></div>
+                </div>
+                <span style="color: var(--text-muted); width: 28px; text-align: right;">10%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                <span style="width: 24px;">3 ★</span>
+                <div style="flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                  <div style="width: 2%; height: 100%; background: #F59E0B; border-radius: 3px;"></div>
+                </div>
+                <span style="color: var(--text-muted); width: 28px; text-align: right;">2%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Write a Review Box (Authenticated vs Guest Gate) -->
+          <div id="reviewSubmissionContainer" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 20px;">
+            <div id="reviewAuthForm" style="display: none;">
+              <div style="font-weight: 700; font-size: 14px; margin-bottom: 8px;">Rate this product:</div>
+              <div style="display: flex; gap: 6px; font-size: 24px; cursor: pointer; margin-bottom: 12px;" id="starPickerContainer">
+                <span onclick="setRatingPicker(1)" class="star-pick active" data-val="1">★</span>
+                <span onclick="setRatingPicker(2)" class="star-pick active" data-val="2">★</span>
+                <span onclick="setRatingPicker(3)" class="star-pick active" data-val="3">★</span>
+                <span onclick="setRatingPicker(4)" class="star-pick active" data-val="4">★</span>
+                <span onclick="setRatingPicker(5)" class="star-pick active" data-val="5">★</span>
+              </div>
+              <textarea id="reviewCommentInput" placeholder="Share your experience with this item (quality, packaging, delivery)..." rows="3" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--surface-variant); color: var(--text); resize: vertical; outline: none; margin-bottom: 10px;"></textarea>
+              <div style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-add" style="padding: 8px 18px; font-size: 13px;" onclick="submitProductReview()">Submit Review ⭐</button>
+              </div>
+            </div>
+
+            <!-- Guest Callout to Sign In -->
+            <div id="reviewGuestGate" style="text-align: center; padding: 12px 6px;">
+              <div style="font-size: 18px; margin-bottom: 4px;">✍️</div>
+              <div style="font-weight: 700; font-size: 13px; margin-bottom: 4px;">Have you purchased or tested this item?</div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Sign in with your Google account to write verified reviews and star ratings.</p>
+              <button type="button" class="btn-card-3d" style="margin: 0 auto; font-size: 12px; padding: 8px 16px;" onclick="openGoogleAuthModal()">
+                Sign In to Review
+              </button>
+            </div>
+          </div>
+
+          <!-- Existing Reviews List -->
+          <div id="detailReviewsList" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn-card-3d" onclick="open3DFromDetail()">View in 3D ↻</button>
         <button class="btn-card-share" onclick="shareFromDetail()">Share 🔗</button>
         <button class="btn-card-alert" onclick="openPriceAlertFromDetail()">🔔 Price Alert</button>
         <button class="btn-add" onclick="addDetailToCart()">Add to Cart 🛒</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================
+       MODAL 12: IN-STORE QR CODE & BARCODE SCANNER
+       ============================================== -->
+  <div id="modalQrScanner" class="modal-overlay" onclick="if(event.target===this) closeQrScannerModal()">
+    <div class="modal-box" style="max-width: 520px; border-radius: 20px;">
+      <div class="modal-header">
+        <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+          <span>📷</span> In-Store QR Code Scanner
+        </div>
+        <button class="modal-close-btn" onclick="closeQrScannerModal()">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px;">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+          Point camera at in-store price tags or shelf QR codes for instant 3D model visualization and real-time price drop alerts.
+        </p>
+
+        <!-- Simulated Camera Viewfinder with Scanning Laser -->
+        <div style="position: relative; width: 100%; height: 230px; background: #000; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 40px rgba(0,0,0,0.8);">
+          <!-- Camera Feed Video / Animated Pattern -->
+          <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, #1E1B4B 0%, #020617 100%); opacity: 0.95;"></div>
+          
+          <!-- Viewfinder Bounding Box -->
+          <div style="position: relative; width: 170px; height: 170px; border: 2px dashed rgba(255,255,255,0.7); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+            <div style="position: absolute; top: -2px; left: -2px; width: 22px; height: 22px; border-top: 4px solid var(--primary); border-left: 4px solid var(--primary); border-top-left-radius: 8px;"></div>
+            <div style="position: absolute; top: -2px; right: -2px; width: 22px; height: 22px; border-top: 4px solid var(--primary); border-right: 4px solid var(--primary); border-top-right-radius: 8px;"></div>
+            <div style="position: absolute; bottom: -2px; left: -2px; width: 22px; height: 22px; border-bottom: 4px solid var(--primary); border-left: 4px solid var(--primary); border-bottom-left-radius: 8px;"></div>
+            <div style="position: absolute; bottom: -2px; right: -2px; width: 22px; height: 22px; border-bottom: 4px solid var(--primary); border-right: 4px solid var(--primary); border-bottom-right-radius: 8px;"></div>
+            
+            <!-- Animated Laser Bar -->
+            <div id="qrLaserBar" style="position: absolute; left: 8px; right: 8px; height: 3px; background: linear-gradient(90deg, transparent, #F43F5E, #38BDF8, #F43F5E, transparent); box-shadow: 0 0 10px #F43F5E; animation: scanLaser 2s ease-in-out infinite;"></div>
+            
+            <div style="text-align: center; color: rgba(255,255,255,0.7); font-size: 11px;">
+              <span style="font-size: 26px; display: block; margin-bottom: 4px;">🎯</span>
+              Align QR code inside box
+            </div>
+          </div>
+          
+          <div style="position: absolute; bottom: 10px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; color: #FFF; font-size: 11px;">
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="color: #10B981;">●</span> Camera Active</span>
+            <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px;">1080p ML Vision</span>
+          </div>
+        </div>
+
+        <!-- In-Store Shelf Barcode Test Chips -->
+        <div style="margin-top: 16px;">
+          <div style="font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+            <span>🏷️</span> Tap an In-Store Shelf Tag to Scan:
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <button type="button" class="btn-filter-toggle" onclick="simulateScanProduct('prod_ethnic')" style="font-size: 12px; padding: 6px 10px;">
+              🥻 Silk Saree Tag
+            </button>
+            <button type="button" class="btn-filter-toggle" onclick="simulateScanProduct('prod_smartphone')" style="font-size: 12px; padding: 6px 10px;">
+              📱 OnePlus 12R Tag
+            </button>
+            <button type="button" class="btn-filter-toggle" onclick="simulateScanProduct('prod_laptop')" style="font-size: 12px; padding: 6px 10px;">
+              💻 ThinkPad Tag
+            </button>
+            <button type="button" class="btn-filter-toggle" onclick="simulateScanProduct('prod_groceries')" style="font-size: 12px; padding: 6px 10px;">
+              🌾 Basmati Rice Tag
+            </button>
+            <button type="button" class="btn-filter-toggle" onclick="simulateScanProduct('prod_4')" style="font-size: 12px; padding: 6px 10px;">
+              ⌚ GPS Watch Tag
+            </button>
+          </div>
+        </div>
+
+        <!-- Scanned Product Action Card -->
+        <div id="scannedProductResult" style="display: none; margin-top: 16px; padding: 14px; background: var(--surface-variant); border: 2px solid var(--accent); border-radius: 14px; animation: fadeIn 0.25s ease;">
+          <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+            <div id="scannedImgBox" style="width: 50px; height: 50px; border-radius: 10px; overflow: hidden; background: #FFF; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
+            <div style="flex: 1;">
+              <div style="font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase;">Product Recognized!</div>
+              <div id="scannedTitle" style="font-weight: 800; font-size: 14px;">Product Name</div>
+              <div id="scannedPrice" style="font-weight: 800; color: var(--primary); font-size: 15px;">₹0</div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button type="button" class="btn-card-3d" style="justify-content: center; font-weight: 800;" onclick="triggerScanned3D()">
+              Instant 3D View ↻
+            </button>
+            <button type="button" class="btn-card-alert" style="justify-content: center; font-weight: 800;" onclick="triggerScannedPriceAlert()">
+              🔔 Set Price Alert
+            </button>
+            <button type="button" class="btn-filter-toggle" style="justify-content: center;" onclick="triggerScannedDetail()">
+              View Details & Reviews
+            </button>
+            <button type="button" class="btn-add" style="justify-content: center;" onclick="triggerScannedAddToCart()">
+              Add to Cart 🛒
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -3250,6 +3444,7 @@
         </div>
       `).join('');
 
+      renderProductReviews(p.id);
       document.getElementById('modalDetail').classList.add('open');
     }
 
@@ -3286,6 +3481,267 @@
         closeDetailModal();
         openPriceAlertModal(id);
       }
+    }
+
+    // ==============================================
+    // PRODUCT REVIEWS & STAR RATINGS ENGINE
+    // ==============================================
+    let currentReviewRating = 5;
+    let productReviews = JSON.parse(localStorage.getItem('cartify_reviews') || 'null');
+    if (!productReviews) {
+      productReviews = {
+        "prod_ethnic": [
+          {
+            id: "rev_eth_1",
+            userName: "Ananya Sharma",
+            rating: 5,
+            comment: "Exquisite craftsmanship! The pure Katan silk has a regal sheen and the golden zari border looks stunning under festive lighting. Wore it to Diwali celebrations and received endless compliments.",
+            date: "3 days ago",
+            verified: true
+          },
+          {
+            id: "rev_eth_2",
+            userName: "Pooja Verma",
+            rating: 5,
+            comment: "The royal blue color is even more vibrant in person. Perfectly woven Kadwa zari, not scratchy at all. Truly authentic Banarasi heritage piece.",
+            date: "1 week ago",
+            verified: true
+          }
+        ],
+        "prod_smartphone": [
+          {
+            id: "rev_phone_1",
+            userName: "Vikram Malhotra",
+            rating: 5,
+            comment: "The Snapdragon 8 Gen 2 flies through BGMI at 90fps without heating! 100W SUPERVOOC charged from 1% to 100% in exactly 26 minutes.",
+            date: "2 days ago",
+            verified: true
+          },
+          {
+            id: "rev_phone_2",
+            userName: "Rohan Nair",
+            rating: 5,
+            comment: "Display brightness under harsh Indian midday sun is phenomenal. Clean OxygenOS with no bloatware, and cameras take great low-light portraits.",
+            date: "5 days ago",
+            verified: true
+          }
+        ],
+        "prod_laptop": [
+          {
+            id: "rev_lap_1",
+            userName: "Sneha Reddy",
+            rating: 5,
+            comment: "Best laptop keyboard on the planet. The 2.8K OLED 120Hz display is stunning for coding and Figma design. Battery easily lasts 11 hours on Wi-Fi.",
+            date: "4 days ago",
+            verified: true
+          }
+        ],
+        "prod_groceries": [
+          {
+            id: "rev_groc_1",
+            userName: "Meenakshi Iyer",
+            rating: 5,
+            comment: "Authentic aged basmati rice. Each grain cooks double in length without sticking. The aroma fills the entire house when making dum biryani!",
+            date: "Yesterday",
+            verified: true
+          },
+          {
+            id: "rev_groc_2",
+            userName: "Arjun Kapoor",
+            rating: 5,
+            comment: "Very clean, uniform grains, zero impurities or broken bits. Packed in sturdy ziplock packaging. Excellent quality.",
+            date: "6 days ago",
+            verified: true
+          }
+        ],
+        "prod_4": [
+          {
+            id: "rev_watch_1",
+            userName: "Deepak Joshi",
+            rating: 5,
+            comment: "Dual-band GPS connects in under 3 seconds in dense city areas. Titanium bezel is scratch-resistant and the 14-day battery is a game changer.",
+            date: "3 days ago",
+            verified: true
+          }
+        ]
+      };
+      localStorage.setItem('cartify_reviews', JSON.stringify(productReviews));
+    }
+
+    function renderProductReviews(productId) {
+      const list = productReviews[productId] || [];
+      const reviewsContainer = document.getElementById('detailReviewsList');
+      const badge = document.getElementById('detailReviewsCountBadge');
+      if (badge) badge.textContent = `${list.length} reviews`;
+
+      const authForm = document.getElementById('reviewAuthForm');
+      const guestGate = document.getElementById('reviewGuestGate');
+
+      if (state.user) {
+        if (authForm) authForm.style.display = 'block';
+        if (guestGate) guestGate.style.display = 'none';
+      } else {
+        if (authForm) authForm.style.display = 'none';
+        if (guestGate) guestGate.style.display = 'block';
+      }
+
+      setRatingPicker(5);
+      const commentInput = document.getElementById('reviewCommentInput');
+      if (commentInput) commentInput.value = '';
+
+      if (list.length === 0) {
+        reviewsContainer.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">
+            No reviews yet. Be the first to review this product!
+          </div>
+        `;
+        return;
+      }
+
+      reviewsContainer.innerHTML = list.map(rev => {
+        const initial = (rev.userName || 'U').charAt(0).toUpperCase();
+        const starsStr = '★'.repeat(rev.rating) + '☆'.repeat(Math.max(0, 5 - rev.rating));
+        return `
+          <div style="background: var(--surface-variant); border-radius: 12px; padding: 14px; border: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #FFF; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center;">
+                  ${initial}
+                </div>
+                <div>
+                  <div style="font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                    ${rev.userName}
+                    ${rev.verified ? '<span style="background: var(--accent-light); color: var(--accent-dark); font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px;">Verified</span>' : ''}
+                  </div>
+                  <div style="font-size: 11px; color: var(--text-muted);">${rev.date}</div>
+                </div>
+              </div>
+              <div style="color: #F59E0B; font-size: 13px; font-weight: 700;">
+                ${starsStr}
+              </div>
+            </div>
+            <p style="font-size: 13px; line-height: 1.5; color: var(--text); margin-top: 4px;">
+              ${rev.comment}
+            </p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setRatingPicker(val) {
+      currentReviewRating = val;
+      const stars = document.querySelectorAll('#starPickerContainer .star-pick');
+      stars.forEach(s => {
+        const sVal = parseInt(s.getAttribute('data-val'), 10);
+        if (sVal <= val) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+    }
+
+    function submitProductReview() {
+      if (!state.user) {
+        openGoogleAuthModal();
+        return;
+      }
+      if (!activeDetailProduct) return;
+
+      const commentInput = document.getElementById('reviewCommentInput');
+      const commentText = (commentInput ? commentInput.value : '').trim();
+      if (!commentText) {
+        showToast('Please enter your review comments', '⚠️');
+        return;
+      }
+
+      const prodId = activeDetailProduct.id;
+      if (!productReviews[prodId]) {
+        productReviews[prodId] = [];
+      }
+
+      const newReview = {
+        id: 'rev_' + Date.now(),
+        userName: state.user.name || 'Verified Customer',
+        rating: currentReviewRating,
+        comment: commentText,
+        date: 'Just now',
+        verified: true
+      };
+
+      productReviews[prodId].unshift(newReview);
+      localStorage.setItem('cartify_reviews', JSON.stringify(productReviews));
+      renderProductReviews(prodId);
+      showToast('Thank you! Your review has been published ⭐', '✓');
+    }
+
+    // ==============================================
+    // IN-STORE CAMERA QR CODE SCANNER ENGINE
+    // ==============================================
+    let activeScannedProduct = null;
+
+    function openQrScannerModal() {
+      activeScannedProduct = null;
+      const res = document.getElementById('scannedProductResult');
+      if (res) res.style.display = 'none';
+      document.getElementById('modalQrScanner').classList.add('open');
+    }
+
+    function closeQrScannerModal() {
+      document.getElementById('modalQrScanner').classList.remove('open');
+      activeScannedProduct = null;
+    }
+
+    function simulateScanProduct(productId) {
+      const p = PRODUCTS.find(item => item.id === productId);
+      if (!p) return;
+
+      activeScannedProduct = p;
+      const res = document.getElementById('scannedProductResult');
+      const title = document.getElementById('scannedTitle');
+      const price = document.getElementById('scannedPrice');
+      const imgBox = document.getElementById('scannedImgBox');
+
+      if (title) title.textContent = p.name;
+      if (price) price.textContent = `₹${p.price.toLocaleString('en-IN')}`;
+      if (imgBox) {
+        imgBox.innerHTML = p.img 
+          ? `<img src="${p.img}" style="width:100%; height:100%; object-fit:cover;">` 
+          : p.icon;
+      }
+
+      if (res) {
+        res.style.display = 'block';
+        res.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      showToast(`Scanned in-store shelf tag for ${p.name}!`, '📷');
+    }
+
+    function triggerScanned3D() {
+      if (!activeScannedProduct) return;
+      const id = activeScannedProduct.id;
+      closeQrScannerModal();
+      open3DModal(id);
+    }
+
+    function triggerScannedPriceAlert() {
+      if (!activeScannedProduct) return;
+      const id = activeScannedProduct.id;
+      closeQrScannerModal();
+      openPriceAlertModal(id);
+    }
+
+    function triggerScannedDetail() {
+      if (!activeScannedProduct) return;
+      const id = activeScannedProduct.id;
+      closeQrScannerModal();
+      openDetailModal(id);
+    }
+
+    function triggerScannedAddToCart() {
+      if (!activeScannedProduct) return;
+      addToCart(activeScannedProduct.id);
+      showToast(`Added ${activeScannedProduct.name} to cart!`, '🛒');
     }
 
     // ==============================================

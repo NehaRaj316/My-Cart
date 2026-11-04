@@ -94,6 +94,7 @@ import com.example.ui.components.PriceAlertDialog
 import com.example.ui.components.Product3DViewerDialog
 import com.example.ui.components.ProductDetailSheet
 import com.example.ui.components.ProductShareDialog
+import com.example.ui.components.QrCodeScannerDialog
 import com.example.ui.screens.CartScreen
 import com.example.ui.screens.FavoritesScreen
 import com.example.ui.screens.OrderHistoryScreen
@@ -139,9 +140,11 @@ class MainActivity : ComponentActivity() {
                 val isPromoApplied by viewModel.promoApplied.collectAsState()
                 val isSimulationPlaying by viewModel.isLiveSimulationPlaying.collectAsState()
                 val snackbarEvent by viewModel.snackbarEvent.collectAsState()
+                val reviewsMap by viewModel.reviews.collectAsState()
 
                 var showDeepLinkDialog by remember { mutableStateOf(false) }
                 var showNetlifyWebStoreDialog by remember { mutableStateOf(false) }
+                var showQrScanner by remember { mutableStateOf(false) }
                 var active3DProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
                 var activeShareProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
                 var activePriceAlertProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
@@ -549,7 +552,8 @@ class MainActivity : ComponentActivity() {
                                     onResetFilters = viewModel::resetFilters,
                                     onOpen3DView = { product -> active3DProduct = product },
                                     onShareProduct = { product -> activeShareProduct = product },
-                                    onSetPriceAlert = { product -> activePriceAlertProduct = product }
+                                    onSetPriceAlert = { product -> activePriceAlertProduct = product },
+                                    onOpenQrScanner = { showQrScanner = true }
                                 )
                             }
                             AppNavTab.RECOMMENDATIONS -> {
@@ -793,7 +797,22 @@ class MainActivity : ComponentActivity() {
                                 onOpen3DView = { active3DProduct = product },
                                 onShareProduct = { activeShareProduct = product },
                                 onSetPriceAlert = { activePriceAlertProduct = product },
-                                onShowMessage = { msg -> viewModel.showSnackbar(msg) }
+                                onShowMessage = { msg -> viewModel.showSnackbar(msg) },
+                                reviews = reviewsMap[product.id] ?: emptyList(),
+                                isAuthenticated = currentUser != null,
+                                onSubmitReview = { rating, comment ->
+                                    viewModel.submitReview(
+                                        productId = product.id,
+                                        rating = rating,
+                                        comment = comment,
+                                        userName = currentUser?.displayName ?: "Verified Customer",
+                                        userId = currentUser?.uid ?: "user_auth"
+                                    )
+                                },
+                                onRequireSignIn = {
+                                    signInPromptReason = "Sign in with your Google account to submit product ratings and reviews."
+                                    showSignInPrompt = true
+                                }
                             )
                         }
 
@@ -876,6 +895,35 @@ class MainActivity : ComponentActivity() {
                                     isGuestMode = false
                                     showSignInPrompt = false
                                     viewModel.showSnackbar("Welcome ${currentUser?.displayName ?: "back"}!")
+                                }
+                            )
+                        }
+
+                        // In-Store Camera QR Code Scanner Dialog
+                        if (showQrScanner) {
+                            val allCatalogProducts by viewModel.products.collectAsState()
+                            QrCodeScannerDialog(
+                                allProducts = allCatalogProducts,
+                                onDismissRequest = { showQrScanner = false },
+                                onOpen3DView = { product ->
+                                    showQrScanner = false
+                                    active3DProduct = product
+                                },
+                                onSetPriceAlert = { product ->
+                                    showQrScanner = false
+                                    activePriceAlertProduct = product
+                                },
+                                onOpenProductDetail = { product ->
+                                    showQrScanner = false
+                                    viewModel.openProductDetail(product)
+                                },
+                                onAddToCart = { product ->
+                                    if (currentUser == null) {
+                                        signInPromptReason = "Sign in with your Google account to add \"${product.title}\" to your cart."
+                                        showSignInPrompt = true
+                                    } else {
+                                        viewModel.addToCart(product)
+                                    }
                                 }
                             )
                         }

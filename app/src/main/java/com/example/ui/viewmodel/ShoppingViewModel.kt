@@ -7,6 +7,7 @@ import com.example.data.model.CartItem
 import com.example.data.model.Order
 import com.example.data.model.OrderStatus
 import com.example.data.model.Product
+import com.example.data.model.ProductReview
 import com.example.data.model.TastePreference
 import com.example.data.model.UserPersona
 import com.example.data.repository.ShoppingRepository
@@ -439,6 +440,26 @@ class ShoppingViewModel(
         } else {
             _snackbarEvent.value = "Price updated to ${CurrencyUtil.formatRupees(droppedPrice)}"
         }
+    }
+
+    val reviews: StateFlow<Map<String, List<ProductReview>>> = repository.reviews
+
+    fun submitReview(
+        productId: String,
+        rating: Int,
+        comment: String,
+        userName: String,
+        userId: String
+    ) {
+        val review = repository.addReview(
+            productId = productId,
+            userId = userId,
+            userName = userName,
+            rating = rating,
+            comment = comment
+        )
+        val product = products.value.find { it.id == productId }
+        _snackbarEvent.value = "⭐ Review submitted! Thank you for rating ${product?.title ?: "this item"}."
     }
 
     override fun onCleared() {

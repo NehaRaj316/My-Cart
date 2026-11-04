@@ -13,6 +13,7 @@ import com.example.data.model.CourierInfo
 import com.example.data.model.Order
 import com.example.data.model.OrderStatus
 import com.example.data.model.Product
+import com.example.data.model.ProductReview
 import com.example.data.model.TastePreference
 import com.example.data.model.TrackingStep
 import com.example.data.model.UserPersona
@@ -635,6 +636,183 @@ class ShoppingRepository(
         _activeOrder.value = order
         clearCart()
         return order
+    }
+
+    private val initialProductReviews: Map<String, List<ProductReview>> = mapOf(
+        "prod_ethnic" to listOf(
+            ProductReview(
+                id = "rev_eth_1",
+                productId = "prod_ethnic",
+                userId = "user_ananya",
+                userName = "Ananya Sharma",
+                rating = 5,
+                comment = "Exquisite craftsmanship! The pure Katan silk has a regal sheen and the golden zari border looks stunning under festive lighting. Wore it to Diwali celebrations and received endless compliments.",
+                timestamp = System.currentTimeMillis() - 86400000L * 3,
+                verifiedPurchase = true,
+                helpfulCount = 42
+            ),
+            ProductReview(
+                id = "rev_eth_2",
+                productId = "prod_ethnic",
+                userId = "user_priya",
+                userName = "Priya Reddy",
+                rating = 5,
+                comment = "The kurta set fits like a glove. Authentic Banarasi weave with soft breathable lining. Packaging and express delivery were top tier!",
+                timestamp = System.currentTimeMillis() - 86400000L * 7,
+                verifiedPurchase = true,
+                helpfulCount = 18
+            ),
+            ProductReview(
+                id = "rev_eth_3",
+                productId = "prod_ethnic",
+                userId = "user_kavita",
+                userName = "Kavita Rao",
+                rating = 4,
+                comment = "Rich royal colors and very comfortable fabric. The dupatta is generous in length and looks very grand.",
+                timestamp = System.currentTimeMillis() - 86400000L * 14,
+                verifiedPurchase = true,
+                helpfulCount = 9
+            )
+        ),
+        "prod_smartphone" to listOf(
+            ProductReview(
+                id = "rev_phone_1",
+                productId = "prod_smartphone",
+                userId = "user_rohit",
+                userName = "Rohit Verma",
+                rating = 5,
+                comment = "Best flagship phone under ₹70k in India! The Snapdragon 8 Gen 3 flies through multitasking and gaming. 100W SUPERVOOC charges it from 10% to 100% in 25 minutes flat.",
+                timestamp = System.currentTimeMillis() - 86400000L * 2,
+                verifiedPurchase = true,
+                helpfulCount = 35
+            ),
+            ProductReview(
+                id = "rev_phone_2",
+                productId = "prod_smartphone",
+                userId = "user_sneha",
+                userName = "Sneha Patel",
+                rating = 5,
+                comment = "The Hasselblad portrait camera has incredible depth and natural skin tones. The 2K 120Hz ProXDR display is eye-meltingly gorgeous.",
+                timestamp = System.currentTimeMillis() - 86400000L * 5,
+                verifiedPurchase = true,
+                helpfulCount = 27
+            )
+        ),
+        "prod_laptop" to listOf(
+            ProductReview(
+                id = "rev_lap_1",
+                productId = "prod_laptop",
+                userId = "user_vikram",
+                userName = "Vikram Menon",
+                rating = 5,
+                comment = "This 240Hz OLED screen is unbelievable. Sleek CNC aluminum chassis feels like a MacBook Pro, but plays Cyberpunk 2077 at ultra settings with RTX 4070 DLSS 3.",
+                timestamp = System.currentTimeMillis() - 86400000L * 4,
+                verifiedPurchase = true,
+                helpfulCount = 31
+            ),
+            ProductReview(
+                id = "rev_lap_2",
+                productId = "prod_laptop",
+                userId = "user_karthik",
+                userName = "Karthik Sundaram",
+                rating = 4,
+                comment = "Great battery life for a thin-and-light gaming monster. Speakers are loud and crystal clear. Perfect for video editing on Premiere Pro too.",
+                timestamp = System.currentTimeMillis() - 86400000L * 10,
+                verifiedPurchase = true,
+                helpfulCount = 14
+            )
+        ),
+        "prod_groceries" to listOf(
+            ProductReview(
+                id = "rev_groc_1",
+                productId = "prod_groceries",
+                userId = "user_meenakshi",
+                userName = "Meenakshi Iyer",
+                rating = 5,
+                comment = "Authentic aged basmati rice. Each grain cooks double in length without sticking. The aroma fills the entire house when making dum biryani!",
+                timestamp = System.currentTimeMillis() - 86400000L * 1,
+                verifiedPurchase = true,
+                helpfulCount = 56
+            ),
+            ProductReview(
+                id = "rev_groc_2",
+                productId = "prod_groceries",
+                userId = "user_arjun",
+                userName = "Arjun Kapoor",
+                rating = 5,
+                comment = "Very clean, uniform grains, zero impurities or broken bits. Packed in sturdy ziplock packaging. Excellent quality.",
+                timestamp = System.currentTimeMillis() - 86400000L * 6,
+                verifiedPurchase = true,
+                helpfulCount = 20
+            )
+        ),
+        "prod_4" to listOf(
+            ProductReview(
+                id = "rev_watch_1",
+                productId = "prod_4",
+                userId = "user_deepak",
+                userName = "Deepak Joshi",
+                rating = 5,
+                comment = "Dual-band GPS connects in under 3 seconds in dense city areas. Titanium bezel is scratch-resistant and the 14-day battery is a game changer compared to Apple Watch.",
+                timestamp = System.currentTimeMillis() - 86400000L * 3,
+                verifiedPurchase = true,
+                helpfulCount = 29
+            )
+        )
+    )
+
+    private val _reviews = MutableStateFlow<Map<String, List<ProductReview>>>(initialProductReviews)
+    val reviews: StateFlow<Map<String, List<ProductReview>>> = _reviews.asStateFlow()
+
+    fun getReviewsForProduct(productId: String): List<ProductReview> {
+        return _reviews.value[productId] ?: emptyList()
+    }
+
+    fun addReview(
+        productId: String,
+        userId: String,
+        userName: String,
+        rating: Int,
+        comment: String
+    ): ProductReview {
+        val newReview = ProductReview(
+            productId = productId,
+            userId = userId,
+            userName = userName,
+            rating = rating.coerceIn(1, 5),
+            comment = comment.trim(),
+            timestamp = System.currentTimeMillis(),
+            verifiedPurchase = true
+        )
+        val currentMap = _reviews.value.toMutableMap()
+        val currentList = currentMap[productId]?.toMutableList() ?: mutableListOf()
+        currentList.add(0, newReview)
+        currentMap[productId] = currentList
+        _reviews.value = currentMap
+
+        // Update product's aggregate rating & reviewsCount in products list and Room
+        val currentProducts = _products.value.toMutableList()
+        val index = currentProducts.indexOfFirst { it.id == productId }
+        if (index != -1) {
+            val prod = currentProducts[index]
+            val totalReviews = currentList.size
+            val avgRating = currentList.map { it.rating }.average().toFloat()
+            val roundedRating = Math.round(avgRating * 10f) / 10f
+            val updatedProd = prod.copy(
+                rating = roundedRating,
+                reviewsCount = prod.reviewsCount + 1
+            )
+            currentProducts[index] = updatedProd
+            _products.value = currentProducts
+
+            productDao?.let { dao ->
+                coroutineScope.launch {
+                    dao.insertProducts(listOf(updatedProd.toEntity()))
+                }
+            }
+        }
+
+        return newReview
     }
 
     companion object {

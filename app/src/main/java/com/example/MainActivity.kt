@@ -90,6 +90,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.ReceiptLong
 import com.example.ui.components.AppDeepLinkDialog
 import com.example.ui.components.NetlifyWebStoreDialog
+import com.example.ui.components.OrderHistoryModal
 import com.example.ui.components.PriceAlertDialog
 import com.example.ui.components.Product3DViewerDialog
 import com.example.ui.components.ProductDetailSheet
@@ -145,6 +146,7 @@ class MainActivity : ComponentActivity() {
                 var showDeepLinkDialog by remember { mutableStateOf(false) }
                 var showNetlifyWebStoreDialog by remember { mutableStateOf(false) }
                 var showQrScanner by remember { mutableStateOf(false) }
+                var showOrderHistoryModal by remember { mutableStateOf(false) }
                 var active3DProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
                 var activeShareProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
                 var activePriceAlertProduct by remember { mutableStateOf<com.example.data.model.Product?>(null) }
@@ -342,9 +344,9 @@ class MainActivity : ComponentActivity() {
                                             }
                                         }
 
-                                        // Order History button
+                                        // Order History button (opens Firestore past order history modal)
                                         IconButton(
-                                            onClick = { viewModel.selectTab(AppNavTab.ORDERS) },
+                                            onClick = { showOrderHistoryModal = true },
                                             modifier = Modifier.testTag("top_bar_orders_button")
                                         ) {
                                             Icon(
@@ -553,7 +555,8 @@ class MainActivity : ComponentActivity() {
                                     onOpen3DView = { product -> active3DProduct = product },
                                     onShareProduct = { product -> activeShareProduct = product },
                                     onSetPriceAlert = { product -> activePriceAlertProduct = product },
-                                    onOpenQrScanner = { showQrScanner = true }
+                                    onOpenQrScanner = { showQrScanner = true },
+                                    onOpenOrderHistoryModal = { showOrderHistoryModal = true }
                                 )
                             }
                             AppNavTab.RECOMMENDATIONS -> {
@@ -692,7 +695,8 @@ class MainActivity : ComponentActivity() {
                                         onRequireSignIn = { reason ->
                                             signInPromptReason = reason
                                             showSignInPrompt = true
-                                        }
+                                        },
+                                        onOpenOrderHistoryModal = { showOrderHistoryModal = true }
                                     )
                                 }
                             }
@@ -716,7 +720,8 @@ class MainActivity : ComponentActivity() {
                                     onRequireSignIn = { reason ->
                                         signInPromptReason = reason
                                         showSignInPrompt = true
-                                    }
+                                    },
+                                    onOpenOrderHistory = { showOrderHistoryModal = true }
                                 )
                             }
                             AppNavTab.FAVORITES -> {
@@ -924,6 +929,26 @@ class MainActivity : ComponentActivity() {
                                     } else {
                                         viewModel.addToCart(product)
                                     }
+                                }
+                            )
+                        }
+
+                        // Firestore Past Order History Modal
+                        if (showOrderHistoryModal) {
+                            OrderHistoryModal(
+                                onDismissRequest = { showOrderHistoryModal = false },
+                                onTrackOrder = { orderId ->
+                                    showOrderHistoryModal = false
+                                    viewModel.selectTab(AppNavTab.TRACKING)
+                                },
+                                onRequireSignIn = { reason ->
+                                    showOrderHistoryModal = false
+                                    signInPromptReason = reason
+                                    showSignInPrompt = true
+                                },
+                                onStartShopping = {
+                                    showOrderHistoryModal = false
+                                    viewModel.selectTab(AppNavTab.SHOP)
                                 }
                             )
                         }

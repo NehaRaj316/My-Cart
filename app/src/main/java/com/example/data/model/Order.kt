@@ -14,7 +14,9 @@ data class TrackingStep(
     val timeLabel: String,
     val location: String,
     val isCompleted: Boolean,
-    val isCurrent: Boolean
+    val isCurrent: Boolean,
+    val etaMinutes: Int? = null,
+    val etaLabel: String? = null
 )
 
 data class CourierInfo(

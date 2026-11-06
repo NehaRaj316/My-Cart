@@ -170,4 +170,46 @@ class ExampleRobolectricTest {
         val activity = controller.create().start().resume().get()
         assertNotNull(activity)
     }
+
+    @Test
+    fun `firestore order model holds order dates total amounts and statuses`() {
+        val now = com.google.firebase.Timestamp.now()
+        val order = com.example.data.repository.FirestoreOrder(
+            id = "ORD_CLOUD_991",
+            userId = "test_user_uid",
+            totalAmount = 4999.0,
+            status = "DELIVERED",
+            deliveryAddress = "Flat 101, Lakeview Residency, Hyderabad",
+            itemsCount = 2,
+            createdAt = now
+        )
+
+        assertEquals("ORD_CLOUD_991", order.id)
+        assertEquals("test_user_uid", order.userId)
+        assertEquals(4999.0, order.totalAmount, 0.001)
+        assertEquals("DELIVERED", order.status)
+        assertEquals(now, order.createdAt)
+        assertEquals("Flat 101, Lakeview Residency, Hyderabad", order.deliveryAddress)
+        assertEquals(2, order.itemsCount)
+
+        val formattedAmount = com.example.util.CurrencyUtil.formatInr(order.totalAmount)
+        assertEquals("₹4,999", formattedAmount)
+    }
+
+    @Test
+    fun `firestore order supports all lifecycle statuses`() {
+        val statuses = listOf("CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED")
+        statuses.forEach { status ->
+            val order = com.example.data.repository.FirestoreOrder(
+                id = "ORD_${status}",
+                totalAmount = 1499.0,
+                status = status,
+                deliveryAddress = "Telangana, India",
+                itemsCount = 1
+            )
+            assertEquals(status, order.status)
+            assertTrue(order.totalAmount > 0.0)
+        }
+    }
 }
+

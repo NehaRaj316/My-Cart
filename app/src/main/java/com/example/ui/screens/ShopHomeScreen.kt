@@ -64,6 +64,7 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -107,6 +108,7 @@ fun ShopHomeScreen(
     onShareProduct: ((Product) -> Unit)? = null,
     onSetPriceAlert: ((Product) -> Unit)? = null,
     onOpenQrScanner: () -> Unit = {},
+    onOpenOrderHistoryModal: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showFilterSheet by remember { mutableStateOf(false) }
@@ -230,6 +232,28 @@ fun ShopHomeScreen(
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    LinearProgressIndicator(
+                                        progress = { activeOrder.routeProgress },
+                                        modifier = Modifier
+                                            .width(120.dp)
+                                            .height(5.dp)
+                                            .clip(RoundedCornerShape(3.dp)),
+                                        color = Color(0xFF10B981),
+                                        trackColor = Color(0xFFBFDBFE)
+                                    )
+                                    Text(
+                                        text = "${(activeOrder.routeProgress * 100).toInt()}% • ETA ~${activeOrder.etaMinutes}m",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0369A1)
+                                    )
+                                }
                             }
                         }
 
@@ -360,6 +384,28 @@ fun ShopHomeScreen(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    // Quick Action: Past Orders Modal
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier
+                            .clickable { onOpenOrderHistoryModal() }
+                            .testTag("quick_past_orders_chip")
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        ) {
+                            Text(
+                                text = "📜 Past Orders",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+
                     listOf(
                         "🎧 Headphones",
                         "⌚ Smart Watch",

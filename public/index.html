@@ -1498,41 +1498,120 @@
             <canvas id="routeCanvas" width="800" height="220" style="width:100%; height:100%;"></canvas>
           </div>
 
-          <!-- Timeline Steps -->
-          <div class="tracking-steps">
-            <div class="tracking-step-item">
-              <div class="step-indicator done">✓</div>
-              <div>
-                <strong style="font-size: 14px;">Order Placed & Confirmed</strong>
-                <div style="color: var(--text-muted); font-size: 12px;">Payment received via UPI • Order ID #NMC-98421</div>
+          <!-- Visual Journey Progress Bar Card -->
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin: 16px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px;">⚡</span>
+                <div>
+                  <strong style="font-size: 14px;">Journey Progress & ETA</strong>
+                  <div style="font-size: 11px; color: var(--text-muted);">Real-time dispatch telemetry</div>
+                </div>
+              </div>
+              <div id="webOverallEtaBadge" style="background: var(--accent-light); color: var(--accent-dark); font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--accent);">
+                ⏱️ ETA: ~18 min
               </div>
             </div>
-            <div class="tracking-step-item">
-              <div class="step-indicator done">✓</div>
-              <div>
-                <strong style="font-size: 14px;">Packed at Mumbai Central Fulfillment Hub</strong>
-                <div style="color: var(--text-muted); font-size: 12px;">Quality check passed • Fragile sealed</div>
+
+            <!-- Visual Gradient Progress Bar Track -->
+            <div style="position: relative; width: 100%; height: 12px; background: var(--surface-variant); border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
+              <div id="webProgressBarFill" style="height: 100%; width: 65%; background: linear-gradient(90deg, #10B981, #0284C7, #F97316); border-radius: 6px; transition: width 0.3s ease;"></div>
+            </div>
+
+            <!-- Milestone Segment Nodes & Individual ETAs beneath the progress bar -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; text-align: center; font-size: 10px;">
+              <div style="flex: 1;">
+                <div style="width: 14px; height: 14px; border-radius: 50%; background: #10B981; color: #FFF; font-size: 9px; line-height: 14px; margin: 0 auto 3px; font-weight: bold;">✓</div>
+                <strong style="display: block;">Placed</strong>
+                <span style="color: var(--text-muted); font-size: 9px;">10:14 AM</span>
+              </div>
+              <div style="flex: 1;">
+                <div style="width: 14px; height: 14px; border-radius: 50%; background: #10B981; color: #FFF; font-size: 9px; line-height: 14px; margin: 0 auto 3px; font-weight: bold;">✓</div>
+                <strong style="display: block;">Packed</strong>
+                <span style="color: var(--text-muted); font-size: 9px;">10:38 AM</span>
+              </div>
+              <div style="flex: 1;">
+                <div style="width: 14px; height: 14px; border-radius: 50%; background: #F97316; color: #FFF; font-size: 9px; line-height: 14px; margin: 0 auto 3px; font-weight: bold;">🛵</div>
+                <strong style="display: block; color: var(--primary);">En Route</strong>
+                <span style="color: #EA580C; font-weight: bold; font-size: 9px;" id="webEtaDispatched">Active</span>
+              </div>
+              <div style="flex: 1;">
+                <div style="width: 14px; height: 14px; border-radius: 50%; background: #E2E8F0; margin: 0 auto 3px;" id="nodeApproaching"></div>
+                <strong style="display: block;">Approaching</strong>
+                <span style="color: var(--text-muted); font-size: 9px;" id="webEtaApproaching">ETA: ~11m</span>
+              </div>
+              <div style="flex: 1;">
+                <div style="width: 14px; height: 14px; border-radius: 50%; background: #E2E8F0; margin: 0 auto 3px;" id="nodeDelivered"></div>
+                <strong style="display: block;">Delivered</strong>
+                <span style="color: var(--text-muted); font-size: 9px;" id="webEtaDelivered">ETA: ~18m</span>
               </div>
             </div>
-            <div class="tracking-step-item">
-              <div class="step-indicator done">✓</div>
-              <div>
-                <strong style="font-size: 14px;">Dispatched with Delivery Executive</strong>
-                <div style="color: var(--text-muted); font-size: 12px;">Rider Liam Patel on Yamaha EV bike</div>
+          </div>
+
+          <!-- Timeline Milestones with Prominent ETA Badges Next to Each Milestone -->
+          <div class="tracking-steps" id="trackingMilestonesList">
+            <div class="tracking-step-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="step-indicator done">✓</div>
+                <div>
+                  <strong style="font-size: 14px;">Order Placed & Confirmed</strong>
+                  <div style="color: var(--text-muted); font-size: 12px;">Payment received via UPI • Order ID #NMC-98421</div>
+                </div>
+              </div>
+              <div style="background: #DCFCE7; color: #166534; font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 8px; border: 1px solid #86EFAC;">
+                Done • 10:14 AM
               </div>
             </div>
-            <div class="tracking-step-item">
-              <div class="step-indicator active">🛵</div>
-              <div>
-                <strong style="font-size: 14px; color: var(--primary);">Out for Delivery (In Progress)</strong>
-                <div style="color: var(--text-muted); font-size: 12px;">Estimated Arrival: Today in 18 minutes</div>
+
+            <div class="tracking-step-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="step-indicator done">✓</div>
+                <div>
+                  <strong style="font-size: 14px;">Packed at Mumbai Central Fulfillment Hub</strong>
+                  <div style="color: var(--text-muted); font-size: 12px;">Quality check passed • Fragile sealed</div>
+                </div>
+              </div>
+              <div style="background: #DCFCE7; color: #166534; font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 8px; border: 1px solid #86EFAC;">
+                Done • 10:38 AM
               </div>
             </div>
-            <div class="tracking-step-item">
-              <div class="step-indicator">🏁</div>
-              <div>
-                <strong style="font-size: 14px;">Delivered to Your Doorstep</strong>
-                <div style="color: var(--text-muted); font-size: 12px;">Contactless OTP verification required</div>
+
+            <div class="tracking-step-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--primary-light); border: 1.5px solid var(--primary); border-radius: 12px; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="step-indicator active">🛵</div>
+                <div>
+                  <strong style="font-size: 14px; color: var(--primary);">Dispatched with Delivery Executive</strong>
+                  <div style="color: var(--text-muted); font-size: 12px;">Rider Liam Patel on Yamaha EV bike</div>
+                </div>
+              </div>
+              <div id="step3EtaBadge" style="background: #FFF7ED; color: #C2410C; font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 8px; border: 1px solid #FDBA74;">
+                ⏱️ In Transit
+              </div>
+            </div>
+
+            <div class="tracking-step-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="step-indicator">⏳</div>
+                <div>
+                  <strong style="font-size: 14px;">In Transit - Approaching Neighborhood</strong>
+                  <div style="color: var(--text-muted); font-size: 12px;">On Main Expressway towards Khammam, Telangana</div>
+                </div>
+              </div>
+              <div id="step4EtaBadge" style="background: var(--surface-variant); color: var(--text-muted); font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border);">
+                ⏳ ETA: ~11 min
+              </div>
+            </div>
+
+            <div class="tracking-step-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="step-indicator">🏁</div>
+                <div>
+                  <strong style="font-size: 14px;">Delivered to Your Doorstep</strong>
+                  <div style="color: var(--text-muted); font-size: 12px;">Contactless OTP verification required</div>
+                </div>
+              </div>
+              <div id="step5EtaBadge" style="background: var(--surface-variant); color: var(--text-muted); font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border);">
+                ⏳ ETA: ~18 min
               </div>
             </div>
           </div>
@@ -3138,6 +3217,44 @@
       ctx.font = '14px sans-serif';
       ctx.fillText('🛵', -7, 5);
       ctx.restore();
+
+      // Update Visual Progress Bar and Milestone ETA badges
+      const barFill = document.getElementById('webProgressBarFill');
+      if (barFill) barFill.style.width = `${Math.round(simProgress * 100)}%`;
+
+      const etaBadge = document.getElementById('webOverallEtaBadge');
+      const remainingMin = Math.max(0, Math.round((1 - simProgress) * 22));
+      if (etaBadge) {
+        if (simProgress >= 0.95) {
+          etaBadge.textContent = '🎉 Delivered!';
+          etaBadge.style.background = '#DCFCE7';
+          etaBadge.style.color = '#166534';
+        } else {
+          etaBadge.textContent = `⏱️ ETA: ~${remainingMin} min`;
+        }
+      }
+
+      const step4Badge = document.getElementById('step4EtaBadge');
+      if (step4Badge) {
+        if (simProgress >= 0.75) {
+          step4Badge.textContent = '✓ Reached';
+          step4Badge.style.background = '#DCFCE7';
+          step4Badge.style.color = '#166534';
+        } else {
+          step4Badge.textContent = `⏳ ETA: ~${Math.max(1, Math.round(remainingMin * 0.5))} min`;
+        }
+      }
+
+      const step5Badge = document.getElementById('step5EtaBadge');
+      if (step5Badge) {
+        if (simProgress >= 0.95) {
+          step5Badge.textContent = '✓ Delivered';
+          step5Badge.style.background = '#DCFCE7';
+          step5Badge.style.color = '#166534';
+        } else {
+          step5Badge.textContent = `⏳ ETA: ~${remainingMin} min`;
+        }
+      }
 
       if (isSimulationPlaying) {
         simProgress += 0.002;

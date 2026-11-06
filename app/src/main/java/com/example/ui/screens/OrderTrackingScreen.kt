@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +21,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -33,8 +38,12 @@ import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -84,6 +93,7 @@ fun OrderTrackingScreen(
     onResetSimulation: () -> Unit,
     isGuest: Boolean = false,
     onRequireSignIn: (String) -> Unit = {},
+    onOpenOrderHistoryModal: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Active Tracker, 1 = Order History
@@ -564,96 +574,452 @@ fun OrderTrackingScreen(
                         }
                     }
 
-                    // 5. Timeline Milestones
+                    // 5. Visual Journey Progress Bar Card
                     item {
-                        Text(
-                            text = "Delivery Milestones",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    items(activeOrder.trackingSteps) { step ->
-                        Row(
+                        Card(
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.Top
+                                .testTag("order_visual_progress_bar_card")
                         ) {
                             Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.width(32.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            when {
-                                                step.isCompleted -> Color(0xFF10B981)
-                                                step.isCurrent -> Color(0xFFF97316)
-                                                else -> MaterialTheme.colorScheme.surfaceVariant
-                                            }
-                                        ),
-                                    contentAlignment = Alignment.Center
+                                // Header: Title + Route % + Overall ETA Badge
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    if (step.isCompleted) {
-                                        Icon(
-                                            imageVector = Icons.Default.Check,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                    } else if (step.isCurrent) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
                                         Box(
                                             modifier = Modifier
-                                                .size(8.dp)
+                                                .size(34.dp)
                                                 .clip(CircleShape)
-                                                .background(Color.White)
-                                        )
+                                                .background(MaterialTheme.colorScheme.primaryContainer),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Speed,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                        Column {
+                                            Text(
+                                                text = "Journey Progress & ETA",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                text = if (activeOrder.status == OrderStatus.DELIVERED) "All milestones completed" else "Live GPS tracking enabled",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                    }
+
+                                    // Overall Route ETA Badge
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = if (activeOrder.status == OrderStatus.DELIVERED) Color(0xFFDCFCE7) else Color(0xFFEFF6FF),
+                                        border = BorderStroke(
+                                            1.dp,
+                                            if (activeOrder.status == OrderStatus.DELIVERED) Color(0xFF10B981) else Color(0xFF38BDF8)
+                                        ),
+                                        modifier = Modifier.testTag("overall_journey_eta_badge")
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = if (activeOrder.status == OrderStatus.DELIVERED) Icons.Default.CheckCircle else Icons.Default.Timer,
+                                                contentDescription = null,
+                                                tint = if (activeOrder.status == OrderStatus.DELIVERED) Color(0xFF166534) else Color(0xFF0369A1),
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Text(
+                                                text = if (activeOrder.status == OrderStatus.DELIVERED) "Delivered!" else "ETA: ~${activeOrder.etaMinutes} min",
+                                                fontWeight = FontWeight.ExtraBold,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = if (activeOrder.status == OrderStatus.DELIVERED) Color(0xFF166534) else Color(0xFF0369A1)
+                                            )
+                                        }
                                     }
                                 }
 
-                                Box(
-                                    modifier = Modifier
-                                        .width(2.dp)
-                                        .height(36.dp)
-                                        .background(
-                                            if (step.isCompleted) Color(0xFF10B981) else MaterialTheme.colorScheme.surfaceVariant
-                                        )
+                                // Visual Animated Continuous Progress Bar with Courier Node
+                                val animatedProgress by animateFloatAsState(
+                                    targetValue = activeOrder.routeProgress.coerceIn(0f, 1f),
+                                    animationSpec = tween(durationMillis = 500),
+                                    label = "order_route_progress"
                                 )
+
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    // Courier Icon Tooltip tracking the progress
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 6.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth(animatedProgress.coerceIn(0.12f, 0.95f))
+                                                .align(Alignment.CenterStart),
+                                            horizontalArrangement = Arrangement.End,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = if (activeOrder.status == OrderStatus.DELIVERED) Color(0xFF10B981) else Color(0xFFF97316),
+                                                tonalElevation = 3.dp,
+                                                modifier = Modifier.padding(bottom = 4.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = if (activeOrder.status == OrderStatus.DELIVERED) "🏡 Arrived" else "🛵 ~${activeOrder.etaMinutes}m",
+                                                        color = Color.White,
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Gradient Progress Bar Track
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(12.dp)
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .testTag("order_visual_progress_bar")
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxHeight()
+                                                .fillMaxWidth(animatedProgress)
+                                                .background(
+                                                    Brush.horizontalGradient(
+                                                        listOf(
+                                                            Color(0xFF10B981),
+                                                            Color(0xFF0284C7),
+                                                            Color(0xFFF97316)
+                                                        )
+                                                    )
+                                                )
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    // Milestone Segment Nodes & Individual ETAs beneath the progress bar
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        val milestonesSummary = listOf(
+                                            "Placed" to "10:14 AM",
+                                            "Packed" to "10:38 AM",
+                                            "En Route" to "Active",
+                                            "Approaching" to "ETA: ~${(activeOrder.etaMinutes / 2).coerceAtLeast(1)}m",
+                                            "Delivered" to "ETA: ~${activeOrder.etaMinutes}m"
+                                        )
+
+                                        milestonesSummary.forEachIndexed { index, (label, eta) ->
+                                            val isStepDone = index < activeOrder.currentStepIndex || (index == activeOrder.currentStepIndex && activeOrder.status == OrderStatus.DELIVERED)
+                                            val isStepActive = index == activeOrder.currentStepIndex && activeOrder.status != OrderStatus.DELIVERED
+
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                modifier = Modifier.width(62.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(14.dp)
+                                                        .clip(CircleShape)
+                                                        .background(
+                                                            when {
+                                                                isStepDone -> Color(0xFF10B981)
+                                                                isStepActive -> Color(0xFFF97316)
+                                                                else -> MaterialTheme.colorScheme.outlineVariant
+                                                            }
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    if (isStepDone) {
+                                                        Text("✓", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                                    } else if (isStepActive) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(6.dp)
+                                                                .clip(CircleShape)
+                                                                .background(Color.White)
+                                                        )
+                                                    }
+                                                }
+
+                                                Spacer(modifier = Modifier.height(4.dp))
+
+                                                Text(
+                                                    text = label,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = if (isStepActive) FontWeight.ExtraBold else FontWeight.Medium,
+                                                    color = if (isStepActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                                    maxLines = 1
+                                                )
+
+                                                Text(
+                                                    text = eta,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontSize = 9.sp,
+                                                    fontWeight = if (isStepActive) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (isStepActive) Color(0xFFEA580C) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
+                        }
+                    }
 
-                            Spacer(modifier = Modifier.width(12.dp))
+                    // Milestone Section Title
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Milestones & Estimated Arrival (ETA)",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${activeOrder.trackingSteps.count { it.isCompleted }}/${activeOrder.trackingSteps.size} Completed",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
 
-                            Column {
+                    // 6. Individual Milestone Cards with Prominent ETA Badges & Segment Progress Bars
+                    itemsIndexed(activeOrder.trackingSteps) { index, step ->
+                        val milestoneProgress = when {
+                            step.isCompleted -> 1.0f
+                            step.isCurrent -> ((activeOrder.routeProgress * 2f).coerceIn(0.25f, 0.9f))
+                            else -> 0.0f
+                        }
+
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (step.isCurrent) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                                else MaterialTheme.colorScheme.surface
+                            ),
+                            border = BorderStroke(
+                                width = if (step.isCurrent) 1.5.dp else 1.dp,
+                                color = if (step.isCurrent) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                                else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = if (step.isCurrent) 3.dp else 1.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("milestone_card_$index")
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp)
+                            ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Top
                                 ) {
-                                    Text(
-                                        text = step.title,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = if (step.isCurrent) FontWeight.ExtraBold else FontWeight.SemiBold,
-                                        color = if (step.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = step.timeLabel,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    // Milestone Indicator & Title
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(34.dp)
+                                                .clip(CircleShape)
+                                                .background(
+                                                    when {
+                                                        step.isCompleted -> Color(0xFF10B981)
+                                                        step.isCurrent -> Color(0xFFF97316)
+                                                        else -> MaterialTheme.colorScheme.surfaceVariant
+                                                    }
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (step.isCompleted) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = "Completed",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            } else if (step.isCurrent) {
+                                                Icon(
+                                                    imageVector = Icons.Default.DirectionsBike,
+                                                    contentDescription = "Current Stage",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            } else {
+                                                Text(
+                                                    text = "${index + 1}",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+
+                                        Column {
+                                            Text(
+                                                text = step.title,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = if (step.isCurrent) FontWeight.ExtraBold else FontWeight.Bold,
+                                                color = if (step.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = "📍 ${step.location}",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = Color(0xFF0284C7),
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    // PROMINENT VISUAL ETA BADGE NEXT TO EACH MILESTONE
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = when {
+                                            step.isCompleted -> Color(0xFFDCFCE7)
+                                            step.isCurrent -> Color(0xFFFFF7ED)
+                                            else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                                        },
+                                        border = BorderStroke(
+                                            1.dp,
+                                            when {
+                                                step.isCompleted -> Color(0xFF86EFAC)
+                                                step.isCurrent -> Color(0xFFFDBA74)
+                                                else -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                            }
+                                        ),
+                                        modifier = Modifier.testTag("milestone_eta_${step.title.lowercase().replace(" ", "_").replace("&", "and")}")
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = when {
+                                                    step.isCompleted -> Icons.Default.CheckCircle
+                                                    step.isCurrent -> Icons.Default.Timer
+                                                    else -> Icons.Default.Schedule
+                                                },
+                                                contentDescription = "ETA Icon",
+                                                tint = when {
+                                                    step.isCompleted -> Color(0xFF166534)
+                                                    step.isCurrent -> Color(0xFFC2410C)
+                                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                                },
+                                                modifier = Modifier.size(13.dp)
+                                            )
+                                            Text(
+                                                text = when {
+                                                    step.isCompleted -> "Done • ${step.timeLabel}"
+                                                    step.isCurrent -> step.etaLabel ?: "ETA: ~${step.etaMinutes ?: activeOrder.etaMinutes} min"
+                                                    else -> step.etaLabel ?: "ETA: ~${step.etaMinutes ?: (index * 6)}m"
+                                                },
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = when {
+                                                    step.isCompleted -> Color(0xFF166534)
+                                                    step.isCurrent -> Color(0xFFC2410C)
+                                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                                },
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                    }
                                 }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
                                 Text(
                                     text = step.description,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(start = 44.dp)
                                 )
-                                Text(
-                                    text = "📍 ${step.location}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color(0xFF06B6D4),
-                                    fontSize = 10.sp
-                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Individual Milestone Segment Progress Bar
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 44.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    LinearProgressIndicator(
+                                        progress = { milestoneProgress },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(6.dp)
+                                            .clip(RoundedCornerShape(3.dp)),
+                                        color = when {
+                                            step.isCompleted -> Color(0xFF10B981)
+                                            step.isCurrent -> Color(0xFFF97316)
+                                            else -> MaterialTheme.colorScheme.outlineVariant
+                                        },
+                                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                    Text(
+                                        text = "${(milestoneProgress * 100).toInt()}%",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (step.isCurrent) Color(0xFFF97316) else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     }
@@ -737,6 +1103,53 @@ fun OrderTrackingScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                if (onOpenOrderHistoryModal != null) {
+                    item {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOpenOrderHistoryModal() }
+                                .testTag("tracking_open_firestore_modal_btn")
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Text(text = "☁️", fontSize = 20.sp)
+                                    Column {
+                                        Text(
+                                            text = "Firestore Cloud Orders Modal",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = "View live statuses, timestamps & receipts",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "Open Modal →",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+
                 items(pastOrders, key = { it.id }) { past ->
                     Card(
                         shape = RoundedCornerShape(18.dp),

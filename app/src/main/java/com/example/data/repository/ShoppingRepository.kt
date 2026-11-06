@@ -286,7 +286,9 @@ class ShoppingRepository(
             timeLabel = "10:14 AM",
             location = "Central Fulfillment Hub",
             isCompleted = true,
-            isCurrent = false
+            isCurrent = false,
+            etaMinutes = 0,
+            etaLabel = "Completed (10:14 AM)"
         ),
         TrackingStep(
             title = "Packed & Quality Checked",
@@ -294,7 +296,9 @@ class ShoppingRepository(
             timeLabel = "10:38 AM",
             location = "Warehouse Bay 4",
             isCompleted = true,
-            isCurrent = false
+            isCurrent = false,
+            etaMinutes = 0,
+            etaLabel = "Completed (10:38 AM)"
         ),
         TrackingStep(
             title = "Out for Delivery",
@@ -302,7 +306,9 @@ class ShoppingRepository(
             timeLabel = "11:15 AM",
             location = "Metro Dispatch Center",
             isCompleted = true,
-            isCurrent = true
+            isCurrent = true,
+            etaMinutes = 4,
+            etaLabel = "Active Now • Dispatched"
         ),
         TrackingStep(
             title = "In Transit - Approaching",
@@ -310,7 +316,9 @@ class ShoppingRepository(
             timeLabel = "Est. 11:32 AM",
             location = "Pine & Broadway Crossing",
             isCompleted = false,
-            isCurrent = false
+            isCurrent = false,
+            etaMinutes = 11,
+            etaLabel = "ETA: ~11 min (11:32 AM)"
         ),
         TrackingStep(
             title = "Delivered to Door",
@@ -318,7 +326,9 @@ class ShoppingRepository(
             timeLabel = "Est. 11:40 AM",
             location = "Khammam, Telangana",
             isCompleted = false,
-            isCurrent = false
+            isCurrent = false,
+            etaMinutes = 18,
+            etaLabel = "ETA: ~18 min (11:40 AM)"
         )
     )
 
@@ -397,10 +407,35 @@ class ShoppingRepository(
         }
 
         val updatedSteps = current.trackingSteps.mapIndexed { idx, step ->
+            val stepEta = when {
+                idx < stepIdx -> 0
+                idx == stepIdx -> (newEta / 2).coerceAtLeast(1)
+                else -> newEta + (idx - stepIdx) * 4
+            }
+            val stepLabel = when {
+                idx < stepIdx -> "Reached • Completed"
+                idx == stepIdx -> if (newStatus == OrderStatus.DELIVERED) "Delivered!" else "ETA: ~${newEta} min (Arriving)"
+                else -> "ETA: ~${stepEta} min"
+            }
             when {
-                idx < stepIdx -> step.copy(isCompleted = true, isCurrent = false)
-                idx == stepIdx -> step.copy(isCompleted = (newStatus == OrderStatus.DELIVERED), isCurrent = (newStatus != OrderStatus.DELIVERED))
-                else -> step.copy(isCompleted = false, isCurrent = false)
+                idx < stepIdx -> step.copy(
+                    isCompleted = true,
+                    isCurrent = false,
+                    etaMinutes = 0,
+                    etaLabel = "Reached"
+                )
+                idx == stepIdx -> step.copy(
+                    isCompleted = (newStatus == OrderStatus.DELIVERED),
+                    isCurrent = (newStatus != OrderStatus.DELIVERED),
+                    etaMinutes = if (newStatus == OrderStatus.DELIVERED) 0 else stepEta,
+                    etaLabel = stepLabel
+                )
+                else -> step.copy(
+                    isCompleted = false,
+                    isCurrent = false,
+                    etaMinutes = stepEta,
+                    etaLabel = stepLabel
+                )
             }
         }
 
@@ -578,7 +613,9 @@ class ShoppingRepository(
                 timeLabel = dateStr,
                 location = "Metro Dispatch Center",
                 isCompleted = true,
-                isCurrent = true
+                isCurrent = true,
+                etaMinutes = 0,
+                etaLabel = "Done • $dateStr"
             ),
             TrackingStep(
                 title = "Packing & Quality Inspection",
@@ -586,7 +623,9 @@ class ShoppingRepository(
                 timeLabel = "Est. 10m",
                 location = "Warehouse Zone A",
                 isCompleted = false,
-                isCurrent = false
+                isCurrent = false,
+                etaMinutes = 10,
+                etaLabel = "ETA: ~10 min"
             ),
             TrackingStep(
                 title = "Courier Pickup",
@@ -594,7 +633,9 @@ class ShoppingRepository(
                 timeLabel = "Est. 20m",
                 location = "Express Bay",
                 isCompleted = false,
-                isCurrent = false
+                isCurrent = false,
+                etaMinutes = 20,
+                etaLabel = "ETA: ~20 min"
             ),
             TrackingStep(
                 title = "Out for Delivery",
@@ -602,7 +643,9 @@ class ShoppingRepository(
                 timeLabel = "Est. 35m",
                 location = "Neighborhood Route",
                 isCompleted = false,
-                isCurrent = false
+                isCurrent = false,
+                etaMinutes = 35,
+                etaLabel = "ETA: ~35 min"
             ),
             TrackingStep(
                 title = "Delivered",
@@ -610,7 +653,9 @@ class ShoppingRepository(
                 timeLabel = "Est. 45m",
                 location = address,
                 isCompleted = false,
-                isCurrent = false
+                isCurrent = false,
+                etaMinutes = 45,
+                etaLabel = "ETA: ~45 min"
             )
         )
 

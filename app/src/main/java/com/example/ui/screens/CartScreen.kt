@@ -70,6 +70,7 @@ fun CartScreen(
     onStartShopping: () -> Unit,
     isGuest: Boolean = false,
     onRequireSignIn: (String) -> Unit = {},
+    onOpenOrderHistory: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var promoInput by remember { mutableStateOf(promoCode) }
@@ -551,6 +552,23 @@ fun CartScreen(
                                 text = "Place Order & Track Live 🚀",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedButton(
+                            onClick = onOpenOrderHistory,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .testTag("cart_view_past_orders_btn"),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "📜 View Past Orders (Firestore)",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }

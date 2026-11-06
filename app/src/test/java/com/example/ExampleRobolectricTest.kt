@@ -211,5 +211,89 @@ class ExampleRobolectricTest {
             assertTrue(order.totalAmount > 0.0)
         }
     }
+
+    @Test
+    fun `mock notification system triggers toast when status changes to Out for Delivery`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        com.example.util.MockNotificationSystem.reset()
+
+        val activeOrder = com.example.data.model.Order(
+            id = "CR-9001",
+            dateCreated = "Today, 10:00 AM",
+            items = emptyList(),
+            subtotal = 1999.0,
+            totalAmount = 1999.0,
+            status = com.example.data.model.OrderStatus.PREPARING,
+            courier = com.example.data.model.CourierInfo(name = "Liam Walker")
+        )
+
+        // Initial status PREPARING does not trigger delivery/out for delivery toast
+        com.example.util.MockNotificationSystem.checkAndNotifyOrderStatus(context, activeOrder)
+        var notification = com.example.util.MockNotificationSystem.activeNotification.value
+        assertEquals(null, notification)
+
+        // Status transitions to OUT_FOR_DELIVERY -> triggers toast notification
+        val outForDeliveryOrder = activeOrder.copy(status = com.example.data.model.OrderStatus.OUT_FOR_DELIVERY)
+        com.example.util.MockNotificationSystem.checkAndNotifyOrderStatus(context, outForDeliveryOrder)
+
+        notification = com.example.util.MockNotificationSystem.activeNotification.value
+        assertNotNull("Should emit active notification on Out for Delivery", notification)
+        assertEquals("Out for Delivery", notification?.title)
+        assertEquals(com.example.data.model.OrderStatus.OUT_FOR_DELIVERY, notification?.status)
+        assertEquals("CR-9001", notification?.orderId)
+        assertTrue(notification?.message?.contains("Out for Delivery") == true)
+        assertTrue(notification?.message?.contains("Liam Walker") == true)
+    }
+
+    @Test
+    fun `mock notification system triggers toast when status changes to Delivered`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        com.example.util.MockNotificationSystem.reset()
+
+        val activeOrder = com.example.data.model.Order(
+            id = "CR-9002",
+            dateCreated = "Today, 11:00 AM",
+            items = emptyList(),
+            subtotal = 3499.0,
+            totalAmount = 3499.0,
+            status = com.example.data.model.OrderStatus.NEARBY
+        )
+
+        // Transition to DELIVERED -> triggers delivered toast notification
+        val deliveredOrder = activeOrder.copy(status = com.example.data.model.OrderStatus.DELIVERED)
+        com.example.util.MockNotificationSystem.checkAndNotifyOrderStatus(context, deliveredOrder)
+
+        val notification = com.example.util.MockNotificationSystem.activeNotification.value
+        assertNotNull("Should emit active notification on Delivered", notification)
+        assertEquals("Order Delivered", notification?.title)
+        assertEquals(com.example.data.model.OrderStatus.DELIVERED, notification?.status)
+        assertEquals("CR-9002", notification?.orderId)
+        assertTrue(notification?.message?.contains("Delivered") == true)
+    }
+
+    @Test
+    fun `mock notification system manual simulation fires toast`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        com.example.util.MockNotificationSystem.reset()
+
+        com.example.util.MockNotificationSystem.simulateNotification(
+            context = context,
+            status = com.example.data.model.OrderStatus.OUT_FOR_DELIVERY,
+            orderId = "CR-TEST-1"
+        )
+        val notif1 = com.example.util.MockNotificationSystem.activeNotification.value
+        assertNotNull(notif1)
+        assertEquals("Out for Delivery", notif1?.title)
+
+        com.example.util.MockNotificationSystem.simulateNotification(
+            context = context,
+            status = com.example.data.model.OrderStatus.DELIVERED,
+            orderId = "CR-TEST-2"
+        )
+        val notif2 = com.example.util.MockNotificationSystem.activeNotification.value
+        assertNotNull(notif2)
+        assertEquals("Order Delivered", notif2?.title)
+    }
 }
+
 

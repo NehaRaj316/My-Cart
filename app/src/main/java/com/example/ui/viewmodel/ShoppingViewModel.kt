@@ -12,6 +12,8 @@ import com.example.data.model.TastePreference
 import com.example.data.model.UserPersona
 import com.example.data.repository.ShoppingRepository
 import com.example.util.CurrencyUtil
+import com.example.util.MockNotification
+import com.example.util.MockNotificationSystem
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,6 +107,11 @@ class ShoppingViewModel(
 
     init {
         startSimulationTicker()
+        viewModelScope.launch {
+            activeOrder.collect { order ->
+                MockNotificationSystem.checkAndNotifyOrderStatus(getApplication(), order)
+            }
+        }
     }
 
     // Active filter count for badge display
@@ -460,6 +467,17 @@ class ShoppingViewModel(
         )
         val product = products.value.find { it.id == productId }
         _snackbarEvent.value = "⭐ Review submitted! Thank you for rating ${product?.title ?: "this item"}."
+    }
+
+    // Mock Notification System
+    val activeNotification: StateFlow<MockNotification?> = MockNotificationSystem.activeNotification
+
+    fun dismissNotification() {
+        MockNotificationSystem.dismissActiveNotification()
+    }
+
+    fun triggerMockNotification(status: OrderStatus) {
+        MockNotificationSystem.simulateNotification(getApplication(), status, activeOrder.value?.id ?: "CR-8924")
     }
 
     override fun onCleared() {

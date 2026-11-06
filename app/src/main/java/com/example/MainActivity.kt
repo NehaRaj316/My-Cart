@@ -89,6 +89,7 @@ import com.example.data.model.OrderStatus
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.ReceiptLong
 import com.example.ui.components.AppDeepLinkDialog
+import com.example.ui.components.MockNotificationBanner
 import com.example.ui.components.NetlifyWebStoreDialog
 import com.example.ui.components.OrderHistoryModal
 import com.example.ui.components.PriceAlertDialog
@@ -142,6 +143,7 @@ class MainActivity : ComponentActivity() {
                 val isSimulationPlaying by viewModel.isLiveSimulationPlaying.collectAsState()
                 val snackbarEvent by viewModel.snackbarEvent.collectAsState()
                 val reviewsMap by viewModel.reviews.collectAsState()
+                val activeNotification by viewModel.activeNotification.collectAsState()
 
                 var showDeepLinkDialog by remember { mutableStateOf(false) }
                 var showNetlifyWebStoreDialog by remember { mutableStateOf(false) }
@@ -696,7 +698,8 @@ class MainActivity : ComponentActivity() {
                                             signInPromptReason = reason
                                             showSignInPrompt = true
                                         },
-                                        onOpenOrderHistoryModal = { showOrderHistoryModal = true }
+                                        onOpenOrderHistoryModal = { showOrderHistoryModal = true },
+                                        onTriggerMockNotification = viewModel::triggerMockNotification
                                     )
                                 }
                             }
@@ -952,6 +955,13 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+
+                        // Mock Notification Toast Banner (complements native Android Toast)
+                        MockNotificationBanner(
+                            notification = activeNotification,
+                            onDismiss = viewModel::dismissNotification,
+                            modifier = Modifier.align(Alignment.TopCenter)
+                        )
                     }
                 }
             }

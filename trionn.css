@@ -881,16 +881,20 @@ header {
   padding: 16px !important;
   display: flex !important;
   flex-direction: column !important;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
-              border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
-              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              border-color 0.35s ease, 
+              box-shadow 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+              background-color 0.35s ease !important;
+  will-change: transform, box-shadow;
+  transform: translateY(0) scale(1) translateZ(0);
   overflow: hidden !important;
 }
 
 .card:hover {
-  transform: translateY(-6px) !important;
-  border-color: rgba(204, 255, 0, 0.45) !important;
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8), 0 0 25px rgba(204, 255, 0, 0.15) !important;
+  transform: translateY(-8px) scale(1.025) !important;
+  border-color: rgba(204, 255, 0, 0.55) !important;
+  box-shadow: 0 22px 45px -8px rgba(0, 0, 0, 0.85), 0 0 28px rgba(204, 255, 0, 0.22) !important;
+  z-index: 5 !important;
 }
 
 .card-img-wrapper {

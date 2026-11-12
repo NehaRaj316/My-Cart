@@ -6,19 +6,102 @@
    ========================================================================== */
 
 :root {
-  --bg: #07080B !important;
-  --bg-canvas: #07080B !important;
-  --surface: #0D0E15 !important;
-  --surface-variant: #131622 !important;
-  --surface-glass: rgba(13, 14, 21, 0.85) !important;
-  --card-bg: #0D0E15 !important;
-  --card-border: rgba(255, 255, 255, 0.08) !important;
-  --card-border-hover: rgba(204, 255, 0, 0.5) !important;
-  
+  -webkit-locale: "en";
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-neue: "Bebas Neue", "Syne", sans-serif;
+  --color-black: #272727;
+  --color-white: #fff;
+  --spacing: .25rem;
+  --container-sm: 24rem;
+  --container-md: 28rem;
+  --container-xl: 36rem;
+  --container-3xl: 48rem;
+  --container-4xl: 56rem;
+  --container-6xl: 72rem;
+  --container-7xl: 80rem;
+  --text-xs: .75rem;
+  --text-xs--line-height: calc(1 / .75);
+  --text-sm: .875rem;
+  --text-sm--line-height: calc(1.25 / .875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25 / 1.875);
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: calc(2.5 / 2.25);
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 1;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --tracking-tight: -.025em;
+  --tracking-normal: 0em;
+  --tracking-widest: .1em;
+  --radius-xs: .125rem;
+  --radius-sm: .25rem;
+  --radius-md: .375rem;
+  --radius-lg: .5rem;
+  --radius-3xl: 1.5rem;
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, .2, 1);
+  --ease-in-out: cubic-bezier(.4, 0, .2, 1);
+  --blur-sm: 8px;
+  --blur-md: 12px;
+  --perspective-midrange: 800px;
+  --aspect-video: 16 / 9;
+  --default-transition-duration: .15s;
+  --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);
+  --default-font-family: var(--font-sans);
+  --default-mono-font-family: var(--font-mono);
+  --color-cream: #e6e4e2;
+  --color-grey-light: #9c9c9c;
+  --color-grey-line: #434343;
+  --color-cream-line: #d8d8d8;
+  --color-dark-font: #434343;
+  --color-light-font: #d8d8d8;
+  --animate-arrowPulse: arrowPulse 1.8s ease-in-out infinite;
+
+  --pl-black: #000;
+  --pl-white: #fff;
+  --pl-panel-gray: #c8c8c8;
+  --pl-line-gray: #434343;
+  --pl-corner-plus-offset: calc(-6px - 6.5px);
+  --pl-mono: "Space Mono", monospace;
+  --pl-display: "Bebas Neue", sans-serif;
+  --size: 360;
+  --bg: #040508 !important;
+  --bg-canvas: #040508 !important;
+  --white: #fff;
+  --ink-soft: #0a0a0a8c;
+  --glass-line: #ffffff2e;
+  --ease-soft: cubic-bezier(.22, 1, .36, 1);
+  --ts-color-bg: #040508;
+  --ts-color-hint: #d8d8d8bf;
+  --ts-color-name: #c8c8c8;
+  --ts-color-role: #d8d8d880;
+  --ts-color-scan-id: #d8d8d8bf;
+  --ts-color-detected: #d8d8d8eb;
+  --swiper-theme-color: #007aff;
+  --swiper-navigation-size: 44px;
+
+  /* Neha My Cart / Trionn Design System Integration */
+  --surface: #0a0b10 !important;
+  --surface-variant: #11131a !important;
+  --surface-glass: rgba(10, 11, 16, 0.88) !important;
+  --card-bg: #07080c !important;
+  --card-border: #434343 !important;
+  --card-border-hover: rgba(204, 255, 0, 0.55) !important;
+
   /* Primary: Trionn Signature Electric Volt Lime */
   --primary: #CCFF00 !important;
   --primary-hover: #D9FF33 !important;
-  --primary-dark: #07080B !important;
+  --primary-dark: #040508 !important;
   --primary-light: rgba(204, 255, 0, 0.12) !important;
   --primary-container: rgba(204, 255, 0, 0.08) !important;
   --on-primary-container: #CCFF00 !important;
@@ -33,18 +116,18 @@
   --amber-light: rgba(255, 184, 0, 0.15) !important;
 
   /* Neutrals */
-  --text: #F8FAFC !important;
-  --text-muted: #8F9CAE !important;
-  --text-dim: #5A6578 !important;
-  --border: rgba(255, 255, 255, 0.08) !important;
-  --border-bright: rgba(255, 255, 255, 0.18) !important;
-  
+  --text: #d8d8d8 !important;
+  --text-muted: #9c9c9c !important;
+  --text-dim: #666666 !important;
+  --border: #434343 !important;
+  --border-bright: #d8d8d8 !important;
+
   /* Radii & Effects */
   --radius: 14px !important;
   --radius-sm: 8px !important;
   --radius-lg: 22px !important;
   --radius-pill: 9999px !important;
-  
+
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.5) !important;
   --shadow-md: 0 8px 24px rgba(0,0,0,0.7) !important;
   --shadow-lg: 0 16px 40px rgba(0,0,0,0.85) !important;
@@ -52,41 +135,66 @@
   --cyan-glow: 0 0 25px rgba(0, 240, 255, 0.35) !important;
 
   /* Typography */
-  --font-display: 'Syne', sans-serif !important;
-  --font-tech: 'Space Grotesk', -apple-system, sans-serif !important;
-  --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
+  --font-display: 'Bebas Neue', 'Syne', sans-serif !important;
+  --font-tech: 'Space Mono', 'Space Grotesk', monospace !important;
+  --font-body: var(--font-sans) !important;
 }
 
 [data-theme="dark"] {
-  --bg: #07080B !important;
-  --surface: #0D0E15 !important;
-  --surface-variant: #131622 !important;
-  --card-bg: #0D0E15 !important;
-  --text: #F8FAFC !important;
-  --text-muted: #8F9CAE !important;
+  --bg: #040508 !important;
+  --surface: #0a0b10 !important;
+  --surface-variant: #11131a !important;
+  --card-bg: #07080c !important;
+  --text: #d8d8d8 !important;
+  --text-muted: #9c9c9c !important;
+  --border: #434343 !important;
 }
 
 /* Base Reset & Smoothness */
 *, *::before, *::after {
   box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: #434343;
 }
 
 html {
+  -webkit-locale: "en";
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+  line-height: 1.5;
+  font-feature-settings: var(--default-font-feature-settings, normal);
+  font-variation-settings: var(--default-font-variation-settings, normal);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  font-family: var(--font-neue), sans-serif;
+  color: #d8d8d8 !important;
+  background-color: #040508 !important;
+  height: auto !important;
   scroll-behavior: smooth;
-  background-color: #07080B !important;
-  color: #F8FAFC !important;
-  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 ::selection {
   background: #CCFF00 !important;
-  color: #07080B !important;
+  color: #040508 !important;
 }
 
 body {
-  background-color: #07080B !important;
-  color: #F8FAFC !important;
-  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  box-sizing: border-box;
+  border: 0 solid;
+  margin: 0;
+  padding: 0;
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+  line-height: 1.5;
+  font-feature-settings: var(--default-font-feature-settings, normal);
+  font-variation-settings: var(--default-font-variation-settings, normal);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  font-family: var(--default-font-family);
+  color: #d8d8d8 !important;
+  background-color: #040508 !important;
+  height: auto !important;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -95,10 +203,43 @@ body {
   background-image: 
     radial-gradient(circle at 15% 10%, rgba(204, 255, 0, 0.04) 0%, transparent 40%),
     radial-gradient(circle at 85% 60%, rgba(0, 240, 255, 0.03) 0%, transparent 45%),
-    linear-gradient(180deg, #07080B 0%, #0A0C12 100%) !important;
+    linear-gradient(180deg, #040508 0%, #08090d 100%) !important;
   background-attachment: fixed !important;
-  margin: 0;
-  padding: 0;
+}
+
+@keyframes arrowPulse {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(6px);
+    opacity: 1;
+  }
+}
+
+/* Trionn Section Corner Plus Markers */
+.trionn-frame-corner {
+  position: relative;
+}
+.trionn-frame-corner::before,
+.trionn-frame-corner::after {
+  content: "+";
+  position: absolute;
+  font-family: var(--pl-mono);
+  font-size: 14px;
+  line-height: 1;
+  color: var(--color-grey-line);
+  pointer-events: none;
+  z-index: 4;
+}
+.trionn-frame-corner::before {
+  top: var(--pl-corner-plus-offset);
+  left: var(--pl-corner-plus-offset);
+}
+.trionn-frame-corner::after {
+  bottom: var(--pl-corner-plus-offset);
+  right: var(--pl-corner-plus-offset);
 }
 
 /* Custom Trionn Glowing Cursor */

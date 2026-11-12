@@ -1416,6 +1416,7 @@
             <option value="price-asc">Price: Low to High</option>
             <option value="price-desc">Price: High to Low</option>
             <option value="rating">Top Rated (4.8+)</option>
+            <option value="newest">Newest Arrivals</option>
           </select>
           <button class="btn-filter-toggle" id="fastDeliveryToggleBtn" onclick="toggleFastDelivery()">
             ⚡ Express Fast Delivery
@@ -1427,6 +1428,15 @@
       <div class="product-grid" id="productGrid">
         <!-- Injected via JavaScript -->
       </div>
+
+      <!-- Persistent Sorting Floating Action Button in the product grid -->
+      <button id="persistentSortFab" class="persistent-sort-fab" onclick="toggleQuickSort()" title="Quick toggle between 'Price: Low to High' and 'Newest Arrivals'">
+        <div class="sort-fab-icon-wrap" id="sortFabIcon">💰↑</div>
+        <div class="sort-fab-label-group">
+          <span class="sort-fab-current" id="sortFabCurrentLabel">Price: Low to High</span>
+          <span class="sort-fab-sub" id="sortFabSubLabel">Tap for Newest Arrivals</span>
+        </div>
+      </button>
     </div>
 
     <!-- ==============================================
@@ -2820,7 +2830,11 @@
         filtered.sort((a, b) => b.price - a.price);
       } else if (state.sortOrder === "rating") {
         filtered.sort((a, b) => b.rating - a.rating);
+      } else if (state.sortOrder === "newest") {
+        filtered.sort((a, b) => PRODUCTS.indexOf(b) - PRODUCTS.indexOf(a));
       }
+
+      updateSortFabUI();
 
       document.getElementById('productResultsCount').textContent = `Showing ${filtered.length} products`;
 
@@ -2907,6 +2921,11 @@
       if (tabId === 'favorites') renderFavorites();
       if (tabId === 'tracking') renderTracking();
       if (tabId === 'cart') renderCart();
+
+      const fab = document.getElementById('persistentSortFab');
+      if (fab) {
+        fab.style.display = (tabId === 'shop') ? 'inline-flex' : 'none';
+      }
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -4704,8 +4723,50 @@
       renderProducts();
     }
 
+    function updateSortFabUI() {
+      const fab = document.getElementById('persistentSortFab');
+      const icon = document.getElementById('sortFabIcon');
+      const curLabel = document.getElementById('sortFabCurrentLabel');
+      const subLabel = document.getElementById('sortFabSubLabel');
+      if (!fab || !icon || !curLabel || !subLabel) return;
+
+      if (state.sortOrder === 'newest') {
+        icon.textContent = '✨';
+        curLabel.textContent = 'Newest Arrivals';
+        subLabel.textContent = 'Tap for Price: Low to High';
+        fab.classList.add('active-newest');
+        fab.classList.remove('active-price');
+      } else if (state.sortOrder === 'price-asc') {
+        icon.textContent = '💰↑';
+        curLabel.textContent = 'Price: Low to High';
+        subLabel.textContent = 'Tap for Newest Arrivals';
+        fab.classList.add('active-price');
+        fab.classList.remove('active-newest');
+      } else {
+        icon.textContent = '🏷️';
+        curLabel.textContent = 'Sort: Low to High';
+        subLabel.textContent = 'Tap for Newest Arrivals';
+        fab.classList.remove('active-price');
+        fab.classList.remove('active-newest');
+      }
+    }
+
+    function toggleQuickSort() {
+      if (state.sortOrder === 'price-asc') {
+        state.sortOrder = 'newest';
+      } else {
+        state.sortOrder = 'price-asc';
+      }
+      const select = document.getElementById('sortDropdown');
+      if (select) select.value = state.sortOrder;
+      updateSortFabUI();
+      renderProducts();
+      showToast(`Sorted: ${state.sortOrder === 'newest' ? 'Newest Arrivals' : 'Price: Low to High'}`, '⚡');
+    }
+
     function applyFilters() {
       state.sortOrder = document.getElementById('sortDropdown').value;
+      updateSortFabUI();
       renderProducts();
     }
 
@@ -4715,6 +4776,7 @@
       state.onlyFastDelivery = false;
       state.sortOrder = "relevance";
       document.getElementById('sortDropdown').value = "relevance";
+      updateSortFabUI();
       document.getElementById('globalSearchInput').value = "";
       document.getElementById('searchClearBtn').style.display = "none";
       const btn = document.getElementById('fastDeliveryToggleBtn');
@@ -4871,6 +4933,7 @@
     // ==============================================
     updateUserUI();
     updateBadges();
+    updateSortFabUI();
     renderProducts();
     handleRouting();
     initTrionnCursor();

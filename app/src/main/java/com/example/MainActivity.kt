@@ -558,7 +558,8 @@ class MainActivity : ComponentActivity() {
                                     onShareProduct = { product -> activeShareProduct = product },
                                     onSetPriceAlert = { product -> activePriceAlertProduct = product },
                                     onOpenQrScanner = { showQrScanner = true },
-                                    onOpenOrderHistoryModal = { showOrderHistoryModal = true }
+                                    onOpenOrderHistoryModal = { showOrderHistoryModal = true },
+                                    onToggleQuickSort = viewModel::toggleQuickSort
                                 )
                             }
                             AppNavTab.RECOMMENDATIONS -> {

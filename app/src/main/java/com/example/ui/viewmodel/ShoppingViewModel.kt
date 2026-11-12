@@ -30,7 +30,8 @@ enum class ProductSortOrder(val label: String) {
     PRICE_LOW_TO_HIGH("Price: Low to High"),
     PRICE_HIGH_TO_LOW("Price: High to Low"),
     RATING("Highest Rated"),
-    DISCOUNT("Biggest Discount %")
+    DISCOUNT("Biggest Discount %"),
+    NEWEST_ARRIVALS("Newest Arrivals")
 }
 
 enum class PriceFilterRange(val label: String, val min: Double?, val max: Double?) {
@@ -189,6 +190,7 @@ class ShoppingViewModel(
             ProductSortOrder.PRICE_HIGH_TO_LOW -> filtered.sortedByDescending { it.price }
             ProductSortOrder.RATING -> filtered.sortedByDescending { it.rating }
             ProductSortOrder.DISCOUNT -> filtered.sortedByDescending { it.discountPercent }
+            ProductSortOrder.NEWEST_ARRIVALS -> filtered.asReversed()
         }
     }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -220,6 +222,18 @@ class ShoppingViewModel(
 
     fun setSortOrder(order: ProductSortOrder) {
         _sortOrder.value = order
+    }
+
+    /**
+     * Toggles between Price: Low to High and Newest Arrivals
+     */
+    fun toggleQuickSort() {
+        val nextSort = if (_sortOrder.value == ProductSortOrder.PRICE_LOW_TO_HIGH) {
+            ProductSortOrder.NEWEST_ARRIVALS
+        } else {
+            ProductSortOrder.PRICE_LOW_TO_HIGH
+        }
+        _sortOrder.value = nextSort
     }
 
     fun setPriceRange(range: PriceFilterRange) {

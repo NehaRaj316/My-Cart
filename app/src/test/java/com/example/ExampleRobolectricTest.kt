@@ -294,6 +294,36 @@ class ExampleRobolectricTest {
         assertNotNull(notif2)
         assertEquals("Order Delivered", notif2?.title)
     }
+
+    @Test
+    fun `toggleQuickSort toggles between Price Low to High and Newest Arrivals`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        val repo = com.example.data.repository.ShoppingRepository()
+        val viewModel = com.example.ui.viewmodel.ShoppingViewModel(app, repo)
+
+        // Initial default is RELEVANCE
+        assertEquals(com.example.ui.viewmodel.ProductSortOrder.RELEVANCE, viewModel.sortOrder.value)
+
+        // First toggle switches to PRICE_LOW_TO_HIGH
+        viewModel.toggleQuickSort()
+        assertEquals(com.example.ui.viewmodel.ProductSortOrder.PRICE_LOW_TO_HIGH, viewModel.sortOrder.value)
+
+        // Second toggle switches to NEWEST_ARRIVALS
+        viewModel.toggleQuickSort()
+        assertEquals(com.example.ui.viewmodel.ProductSortOrder.NEWEST_ARRIVALS, viewModel.sortOrder.value)
+
+        // Third toggle switches back to PRICE_LOW_TO_HIGH
+        viewModel.toggleQuickSort()
+        assertEquals(com.example.ui.viewmodel.ProductSortOrder.PRICE_LOW_TO_HIGH, viewModel.sortOrder.value)
+    }
+
+    @Test
+    fun `product sort order enum includes Newest Arrivals`() {
+        val newestOrder = com.example.ui.viewmodel.ProductSortOrder.NEWEST_ARRIVALS
+        assertEquals("Newest Arrivals", newestOrder.label)
+        val lowToHigh = com.example.ui.viewmodel.ProductSortOrder.PRICE_LOW_TO_HIGH
+        assertEquals("Price: Low to High", lowToHigh.label)
+    }
 }
 
 

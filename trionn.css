@@ -1613,3 +1613,118 @@ header {
   .hero-actions { flex-direction: column !important; width: 100% !important; }
   .btn-hero-primary, .btn-hero-secondary { width: 100% !important; text-align: center !important; }
 }
+
+/* Persistent Sorting Floating Action Button in the Product Grid */
+.persistent-sort-fab {
+  position: fixed !important;
+  bottom: 88px !important;
+  right: 28px !important;
+  z-index: 980 !important;
+  background: rgba(13, 14, 21, 0.94) !important;
+  border: 1.5px solid #CCFF00 !important;
+  border-radius: 9999px !important;
+  padding: 8px 18px 8px 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  cursor: pointer !important;
+  color: #FFF !important;
+  font-family: 'Space Grotesk', sans-serif !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), 0 0 20px rgba(204, 255, 0, 0.3) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              border-color 0.3s ease, 
+              background 0.3s ease !important;
+  user-select: none !important;
+}
+
+.persistent-sort-fab:hover {
+  transform: translateY(-4px) scale(1.04) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85), 0 0 30px rgba(204, 255, 0, 0.5) !important;
+  background: #0E1019 !important;
+  border-color: #D9FF33 !important;
+}
+
+.persistent-sort-fab:active {
+  transform: translateY(-1px) scale(0.98) !important;
+}
+
+.sort-fab-icon-wrap {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: #CCFF00 !important;
+  color: #07080B !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 10px rgba(204, 255, 0, 0.4) !important;
+  transition: transform 0.25s ease !important;
+}
+
+.persistent-sort-fab:hover .sort-fab-icon-wrap {
+  transform: rotate(15deg) scale(1.1) !important;
+}
+
+.sort-fab-label-group {
+  display: flex !important;
+  flex-direction: column !important;
+  text-align: left !important;
+}
+
+.sort-fab-current {
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #FFF !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.sort-fab-sub {
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: #CCFF00 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  margin-top: 2px !important;
+}
+
+.persistent-sort-fab.active-newest {
+  border-color: #00F0FF !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), 0 0 20px rgba(0, 240, 255, 0.3) !important;
+}
+
+.persistent-sort-fab.active-newest .sort-fab-icon-wrap {
+  background: #00F0FF !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4) !important;
+}
+
+.persistent-sort-fab.active-newest .sort-fab-sub {
+  color: #00F0FF !important;
+}
+
+@media (max-width: 768px) {
+  .persistent-sort-fab {
+    bottom: 74px !important;
+    right: 16px !important;
+    padding: 7px 14px 7px 8px !important;
+  }
+  .sort-fab-icon-wrap {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 12px !important;
+  }
+  .sort-fab-current {
+    font-size: 11px !important;
+  }
+  .sort-fab-sub {
+    font-size: 9px !important;
+  }
+}
+

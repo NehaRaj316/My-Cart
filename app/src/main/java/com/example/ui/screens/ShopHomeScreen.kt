@@ -62,8 +62,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -109,20 +112,31 @@ fun ShopHomeScreen(
     onSetPriceAlert: ((Product) -> Unit)? = null,
     onOpenQrScanner: () -> Unit = {},
     onOpenOrderHistoryModal: () -> Unit = {},
+    onToggleQuickSort: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showFilterSheet by remember { mutableStateOf(false) }
     val categories = listOf("All", "Fashion", "Groceries", "Tech", "Living", "Fitness")
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = modifier
-            .fillMaxSize()
-            .testTag("shop_home_grid"),
-        contentPadding = PaddingValues(bottom = 96.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    val handleToggleSort = onToggleQuickSort ?: {
+        val nextSort = if (sortOrder == ProductSortOrder.PRICE_LOW_TO_HIGH) {
+            ProductSortOrder.NEWEST_ARRIVALS
+        } else {
+            ProductSortOrder.PRICE_LOW_TO_HIGH
+        }
+        onApplyFilters(nextSort, priceRange, minRating, onlyFastDelivery, selectedCategory)
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag("shop_home_grid"),
+            contentPadding = PaddingValues(bottom = 120.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
         // Guest Mode Top Banner
         if (isGuest) {
             item(span = { GridItemSpan(2) }) {
@@ -905,6 +919,48 @@ fun ShopHomeScreen(
                 }
             }
         }
+    }
+
+    // Persistent sorting floating action button in the product grid
+    ExtendedFloatingActionButton(
+            onClick = handleToggleSort,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 20.dp)
+                .testTag("persistent_sorting_fab"),
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            shape = RoundedCornerShape(20.dp),
+            icon = {
+                Icon(
+                    imageVector = if (sortOrder == ProductSortOrder.PRICE_LOW_TO_HIGH) {
+                        Icons.Default.ArrowUpward
+                    } else {
+                        Icons.Default.Schedule
+                    },
+                    contentDescription = "Toggle Sort Order",
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = when (sortOrder) {
+                            ProductSortOrder.PRICE_LOW_TO_HIGH -> "Price: Low to High"
+                            ProductSortOrder.NEWEST_ARRIVALS -> "Newest Arrivals"
+                            else -> "Quick Sort"
+                        },
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = if (sortOrder == ProductSortOrder.PRICE_LOW_TO_HIGH) "Tap for Newest" else "Tap for Low to High",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    )
+                }
+            }
+        )
     }
 
     if (showFilterSheet) {

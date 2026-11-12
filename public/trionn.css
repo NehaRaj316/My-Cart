@@ -134,10 +134,19 @@
   --volt-glow: 0 0 25px rgba(204, 255, 0, 0.35) !important;
   --cyan-glow: 0 0 25px rgba(0, 240, 255, 0.35) !important;
 
+  --font-neue: "neueHaas", "neueHaas Fallback", "Familjen Grotesk", "Bebas Neue", sans-serif;
+  --font-ppeditorial: "ppEditorial", "ppEditorial Fallback", "Instrument Serif", Georgia, serif;
+  --font-martian: "martianMono", "martianMono Fallback", "Martian Mono", "Space Mono", monospace;
+  --font-familjen: "familjen", "familjen Fallback", "Familjen Grotesk", sans-serif;
+  --tw-leading: normal;
+  --tw-font-weight: var(--font-weight-normal);
+  --tw-tracking: var(--tracking-normal);
+
   /* Typography */
-  --font-display: 'Bebas Neue', 'Syne', sans-serif !important;
-  --font-tech: 'Space Mono', 'Space Grotesk', monospace !important;
-  --font-body: var(--font-sans) !important;
+  --font-display: var(--font-neue) !important;
+  --font-tech: var(--font-martian) !important;
+  --font-editorial: var(--font-ppeditorial) !important;
+  --font-body: var(--font-familjen) !important;
 }
 
 [data-theme="dark"] {
@@ -167,6 +176,8 @@ html {
   font-variation-settings: var(--default-font-variation-settings, normal);
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+  text-rendering: optimizelegibility;
+  -webkit-font-smoothing: antialiased;
   font-family: var(--font-neue), sans-serif;
   color: #d8d8d8 !important;
   background-color: #040508 !important;
@@ -792,14 +803,37 @@ header {
   pointer-events: none;
 }
 
-.hero-content {
+.hero-content,
+.trionn-editorial-stack {
   position: relative !important;
   z-index: 1 !important;
+  text-rendering: optimizelegibility;
+  font-family: var(--font-neue), sans-serif !important;
+  font-size: var(--text-xl);
+  --tw-leading: normal;
+  --tw-font-weight: var(--font-weight-normal);
+  line-height: normal;
+  font-weight: var(--font-weight-normal);
+  --tw-tracking: var(--tracking-normal);
+  letter-spacing: var(--tracking-normal);
+  -webkit-font-smoothing: antialiased;
+  color: var(--color-light-font) !important;
+  box-sizing: border-box;
+  border: 0 solid;
+  margin: 0;
+  padding: 0;
+  display: flex !important;
+  width: 100% !important;
+  flex: 1 1 auto !important;
+  min-width: calc(var(--spacing) * 0) !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  mix-blend-mode: difference !important;
   max-width: 760px !important;
 }
 
 .hero-tag {
-  font-family: 'Space Grotesk', sans-serif !important;
+  font-family: var(--font-martian), monospace !important;
   font-size: 11px !important;
   font-weight: 700 !important;
   letter-spacing: 0.15em !important;
@@ -807,6 +841,7 @@ header {
   color: #CCFF00 !important;
   display: inline-flex !important;
   align-items: center !important;
+  align-self: flex-start !important;
   gap: 6px !important;
   background: rgba(204, 255, 0, 0.08) !important;
   border: 1px solid rgba(204, 255, 0, 0.3) !important;
@@ -816,25 +851,22 @@ header {
 }
 
 .hero-title {
-  font-family: 'Syne', sans-serif !important;
-  font-weight: 800 !important;
-  font-size: 44px !important;
+  font-family: var(--font-neue), sans-serif !important;
+  font-weight: var(--font-weight-medium) !important;
+  font-size: clamp(2rem, 3.8vw, var(--text-5xl)) !important;
   line-height: 1.08 !important;
-  letter-spacing: -0.03em !important;
-  color: #FFF !important;
+  letter-spacing: var(--tracking-tight) !important;
+  color: var(--color-light-font) !important;
   margin-bottom: 16px !important;
-  background: linear-gradient(180deg, #FFFFFF 20%, #B8C2D1 100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
 }
 
 .hero-subtitle {
-  font-size: 15px !important;
+  font-size: var(--text-base) !important;
   line-height: 1.6 !important;
-  color: #8F9CAE !important;
+  color: var(--color-grey-light) !important;
   margin-bottom: 28px !important;
   max-width: 620px !important;
-  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-family: var(--font-familjen), sans-serif !important;
 }
 
 .hero-actions {
